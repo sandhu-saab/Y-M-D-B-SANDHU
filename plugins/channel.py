@@ -15,11 +15,8 @@ caption_template = """<b>𝖭𝖤𝖶 {kind} 𝖠𝖣𝖣𝖤𝖣 ✅</b>
 🎬 <b>Tɪᴛʟᴇ: {title} {year}</b>
 🎧 <b>Aᴜᴅɪᴏ: {language}</b>
 🎞️ <b>Gᴇɴʀᴇꜱ: {genres}</b>
-
 <blockquote>✨ Telegram Files ✨</blockquote>
-
 {links}
-
 <blockquote>〽️ Powered by @OttSandhu</blockquote>"""
 
 movie_files = defaultdict(list)
