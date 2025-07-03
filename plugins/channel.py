@@ -2,7 +2,6 @@ import re
 import aiohttp
 import asyncio
 from pyrogram import Client, filters, enums
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from plugins.Dreamxfutures.Imdbposter import get_movie_details
 from database.users_chats_db import db
 from database.ia_filterdb import save_file, unpack_new_file_id
@@ -11,30 +10,31 @@ from collections import defaultdict
 
 media_filter = filters.document | filters.video | filters.audio
 
-CAPTION_LANGUAGES = [
-    "Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu",
-    "Malayalam", "Kannada", "Marathi", "Punjabi", "Bengoli", "Gujrati", "Korean",
-    "Gujarati", "Spanish", "French", "German", "Chinese", "Arabic", "Portuguese",
-    "Russian", "Japanese", "Odia", "Assamese", "Urdu"
-]
-
 caption_template = """<b>𝖭𝖤𝖶 {kind} 𝖠𝖣𝖣𝖤𝖣 ✅</b>
 
 🎬 <b>{title} {year}</b>
-🔰 <b>Qᴜᴀʟɪᴛʏ:</b> {quality}
-🎧 <b>Aᴜᴅɪᴏ:</b> {language}
-🎞️ <b>Gᴇɴʀᴇꜱ:</b> {genres}
+🔰 <b>Quality:</b> {quality}
+🎧 <b>Audio:</b> {language}
+🎞️ <b>Genres:</b> {genres}
 
 <b>✨ Telegram Files ✨</b>
 
 {links}
 
-<blockquote>〽️ Powered by @OttSandhu</blockquote>"""
+<blockquote>〽️ Powered by @Dreamx_Future_Bot</blockquote>"""
 
 movie_files = defaultdict(list)
 notified_movies = set()
 processing_movies = set()
 POST_DELAY = 10
+
+CAPTION_LANGUAGES = [
+    "Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu",
+    "Malayalam", "Kannada", "Marathi", "Punjabi", "Gujrati", "Gujarati", "Korean",
+    "Spanish", "French", "German", "Chinese", "Arabic", "Portuguese",
+    "Russian", "Japanese", "Odia", "Assamese", "Urdu"
+]
+
 
 @Client.on_message(filters.chat(CHANNELS) & media_filter)
 async def media(bot, message):
@@ -44,6 +44,7 @@ async def media(bot, message):
             break
     else:
         return
+
     media.file_type = file_type
     media.caption = message.caption
 
@@ -94,7 +95,7 @@ async def queue_movie_file(bot, media):
     except Exception as e:
         processing_movies.discard(file_name)
         print(f"Error in queue_movie_file: {e}")
-        await bot.send_message(LOG_CHANNEL, f"Failed to send movie update.\n\nError: <code>{e}</code>")
+        await bot.send_message(LOG_CHANNEL, f"Error in queue_movie_file: <code>{e}</code>")
 
 
 async def send_movie_update(bot, file_name, files):
@@ -106,7 +107,7 @@ async def send_movie_update(bot, file_name, files):
         imdb = await get_movie_details(file_name)
         title = imdb.get("title", file_name)
         rating = imdb.get("rating", "N/A")
-        genres = ", ".join(imdb.get("genres", [])) or "Unknown"
+        genres = imdb.get("genres") or "Unknown"
         kind = imdb.get("kind", "Movie").upper().replace(" ", "_")
         if kind == "TV_SERIES":
             kind = "SERIES"
@@ -119,11 +120,24 @@ async def send_movie_update(bot, file_name, files):
                 languages.update(file["language"].split(", "))
         language = ", ".join(sorted(languages)) or "Not Idea"
 
+        # Quality-wise links sorted & line gap
+        def quality_sort_key(file):
+            q = file.get("quality", "").lower()
+            try:
+                return int(re.search(r"\d+", q).group())
+            except:
+                return 9999
+
+        sorted_files = sorted(files, key=quality_sort_key)
+        max_quality_len = max(len(f['quality']) for f in sorted_files) if sorted_files else 0
+
         quality_text = ""
-        for file in files:
-            quality = file["quality"]
-            link = f"<a href='https://t.me/IMDB004_BOT?start=file_0_{file['file_id']}'>{file['file_size']}</a>"
-            quality_text += f"📦 {quality} : {link}\n"
+        for file in sorted_files:
+            quality = file["quality"].ljust(max_quality_len)
+            size = file["file_size"]
+            file_id = file["file_id"]
+            link = f"<a href='https://t.me/IMDB004_BOT?start=file_0_{file_id}'>{size}</a>"
+            quality_text += f"📦 <b>{quality}</b> : {link}\n\n"
 
         caption_data = {
             "kind": kind,
@@ -132,7 +146,7 @@ async def send_movie_update(bot, file_name, files):
             "quality": files[0]["quality"],
             "language": language,
             "genres": genres,
-            "links": quality_text,
+            "links": quality_text.strip(),
         }
 
         full_caption = caption_template.format_map(caption_data)
@@ -146,10 +160,10 @@ async def send_movie_update(bot, file_name, files):
 
     except Exception as e:
         print("Error in send_movie_update:", e)
-        await bot.send_message(LOG_CHANNEL, f"Error sending movie update.\n\nError: <code>{e}</code>")
+        await bot.send_message(LOG_CHANNEL, f"Error in send_movie_update: <code>{e}</code>")
 
 
-# --- JISSHU Poster API Integration ---
+# Jisshu Poster System
 async def fetch_jisshu_poster(title):
     async with aiohttp.ClientSession() as session:
         query = title.strip().replace(" ", "+")
@@ -168,7 +182,7 @@ async def fetch_jisshu_poster(title):
             return None
 
 
-# --- Helper Functions ---
+# Utility Functions
 def extract_year(text):
     match = re.search(r"\b(19|20)\d{2}\b", text)
     return match.group(0) if match else None
@@ -205,4 +219,3 @@ def format_file_size(size_bytes):
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
-
