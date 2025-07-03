@@ -106,7 +106,7 @@ async def get_movie_details(query, id=False, file=None):
             "distributors": list_to_str(movie.get("distributors")),
             'release_date': date,
             'year': movie.get('year'),
-            'genres': list_to_str(movie.get("genres")),
+            'genres': list_to_str(movie.get("genres")) or "Unknown",
             'poster_url': poster_url,
             'plot': plot,
             'rating': str(movie.get("rating", "N/A")),
