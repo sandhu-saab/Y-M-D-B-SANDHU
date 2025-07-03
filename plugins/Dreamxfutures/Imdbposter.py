@@ -69,12 +69,17 @@ async def get_movie_details(query, id=False, file=None):
         else:
             movieid = query
         movie = ia.get_movie(movieid)
+
+        # ✅ Debug line to print genres
+        print("Genres Fetched =>", movie.get("genres"))
+
         if movie.get("original air date"):
             date = movie["original air date"]
         elif movie.get("year"):
             date = movie.get("year")
         else:
             date = "N/A"
+
         plot = movie.get('plot')
         if plot and len(plot) > 0:
             plot = plot[0]
@@ -82,6 +87,7 @@ async def get_movie_details(query, id=False, file=None):
             plot = movie.get('plot outline')
         if plot and len(plot) > 800:
             plot = plot[:800] + "..."
+
         poster_url = movie.get('full-size cover url')
         return {
             'title': movie.get('title'),
@@ -106,7 +112,7 @@ async def get_movie_details(query, id=False, file=None):
             "distributors": list_to_str(movie.get("distributors")),
             'release_date': date,
             'year': movie.get('year'),
-            'genres': list_to_str(movie.get("genres")) or "Unknown",
+            'genres': list_to_str(movie.get("genres")) or "Unknown",  # ✅ Safe fallback
             'poster_url': poster_url,
             'plot': plot,
             'rating': str(movie.get("rating", "N/A")),
