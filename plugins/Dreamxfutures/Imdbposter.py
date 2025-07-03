@@ -68,7 +68,6 @@ async def get_movie_details(query, id=False, file=None):
             movieid = movieid[0].movieID
         else:
             movieid = query
-
         movie = ia.get_movie(movieid)
 
         # ✅ Debug line to print genres
@@ -90,7 +89,6 @@ async def get_movie_details(query, id=False, file=None):
             plot = plot[:800] + "..."
 
         poster_url = movie.get('full-size cover url')
-
         return {
             'title': movie.get('title'),
             'votes': movie.get('votes'),
@@ -114,31 +112,12 @@ async def get_movie_details(query, id=False, file=None):
             "distributors": list_to_str(movie.get("distributors")),
             'release_date': date,
             'year': movie.get('year'),
-            'genres': list_to_str(movie.get("genres")) or "Unknown",  # ✅ fallback
+            'genres': list_to_str(movie.get("genres")) or "Unknown",  # ✅ Safe fallback
             'poster_url': poster_url,
             'plot': plot,
             'rating': str(movie.get("rating", "N/A")),
             'url': f'https://www.imdb.com/title/tt{movieid}'
         }
-
     except Exception as e:
         print(f"An error occurred in get_movie_details: {e}")
         return None
-
-# ✅ Add this fetch_jisshu_poster for fallback poster support
-async def fetch_jisshu_poster(title):
-    async with aiohttp.ClientSession() as session:
-        query = title.strip().replace(" ", "+")
-        url = f"https://jisshuapis.vercel.app/api.php?query={query}"
-        try:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as res:
-                if res.status != 200:
-                    return None
-                data = await res.json()
-                for key in ["jisshu-2", "jisshu-3", "jisshu-4"]:
-                    posters = data.get(key)
-                    if posters and isinstance(posters, list) and posters:
-                        return posters[0]
-                return None
-        except:
-            return None
