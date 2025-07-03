@@ -12,16 +12,15 @@ media_filter = filters.document | filters.video | filters.audio
 
 caption_template = """<b>𝖭𝖤𝖶 {kind} 𝖠𝖣𝖣𝖤𝖣 ✅</b>
 
-🎬 <b>{title} {year}</b>
-🔰 <b>Quality:</b> {quality}
-🎧 <b>Audio:</b> {language}
-🎞️ <b>Genres:</b> {genres}
+🎬 <b>Tɪᴛʟᴇ: {title} {year}</b>
+🎧 <b>Aᴜᴅɪᴏ: {language}</b>
+🎞️ <b>Gᴇɴʀᴇꜱ: {genres}</b>
 
-<b>✨ Telegram Files ✨</b>
+<blockquote>✨ Telegram Files ✨</blockquote>
 
 {links}
 
-<blockquote>〽️ Powered by @Dreamx_Future_Bot</blockquote>"""
+<blockquote>〽️ Powered by @OttSandhu</blockquote>"""
 
 movie_files = defaultdict(list)
 notified_movies = set()
