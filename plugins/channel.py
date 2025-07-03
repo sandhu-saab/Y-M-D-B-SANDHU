@@ -2,8 +2,7 @@ import re
 import aiohttp
 import asyncio
 from pyrogram import Client, filters, enums
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_jisshu_poster
+from plugins.Dreamxfutures.Imdbposter import get_movie_details
 from database.users_chats_db import db
 from database.ia_filterdb import save_file, unpack_new_file_id
 from info import CHANNELS, MOVIE_UPDATE_CHANNEL, LOG_CHANNEL
@@ -11,30 +10,26 @@ from collections import defaultdict
 
 media_filter = filters.document | filters.video | filters.audio
 
-CAPTION_LANGUAGES = [
-    "Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu",
-    "Malayalam", "Kannada", "Marathi", "Punjabi", "Bengoli", "Gujrati", "Korean",
-    "Gujarati", "Spanish", "French", "German", "Chinese", "Arabic", "Portuguese",
-    "Russian", "Japanese", "Odia", "Assamese", "Urdu"
-]
-
 caption_template = """<b>𝖭𝖤𝖶 {kind} 𝖠𝖣𝖣𝖤𝖣 ✅</b>
 
-🎬 <b>{title} {year}</b>
-🔰 <b>Qᴜᴀʟɪᴛʏ:</b> {quality}
-🎧 <b>Aᴜᴅɪᴏ:</b> {language}
-🎞️ <b>Gᴇɴʀᴇꜱ:</b> {genres}
-
-<b>✨ Telegram Files ✨</b>
-
+🎬 <b>Tɪᴛʟᴇ: {title} {year}</b>
+🎧 <b>Aᴜᴅɪᴏ: {language}</b>
+🎞️ <b>Gᴇɴʀᴇꜱ: {genres}</b>
+<blockquote>✨ Telegram Files ✨</blockquote>
 {links}
-
 <blockquote>〽️ Powered by @OttSandhu</blockquote>"""
 
 movie_files = defaultdict(list)
 notified_movies = set()
 processing_movies = set()
 POST_DELAY = 10
+
+CAPTION_LANGUAGES = [
+    "Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu",
+    "Malayalam", "Kannada", "Marathi", "Punjabi", "Gujrati", "Gujarati", "Korean",
+    "Spanish", "French", "German", "Chinese", "Arabic", "Portuguese",
+    "Russian", "Japanese", "Odia", "Assamese", "Urdu"
+]
 
 
 @Client.on_message(filters.chat(CHANNELS) & media_filter)
@@ -108,15 +103,12 @@ async def send_movie_update(bot, file_name, files):
         imdb = await get_movie_details(file_name)
         title = imdb.get("title", file_name)
         rating = imdb.get("rating", "N/A")
-        genres = imdb.get("genres")
-        if isinstance(genres, list):
-            genres = ", ".join(genres)
-        genres = genres or "Unknown"
+        genres = imdb.get("genres") or "Unknown"
         kind = imdb.get("kind", "Movie").upper().replace(" ", "_")
         if kind == "TV_SERIES":
             kind = "SERIES"
 
-        poster_img = imdb.get("poster_url") or await fetch_jisshu_poster(title)
+        poster_img = await fetch_jisshu_poster(title)
 
         languages = set()
         for file in files:
@@ -124,10 +116,11 @@ async def send_movie_update(bot, file_name, files):
                 languages.update(file["language"].split(", "))
         language = ", ".join(sorted(languages)) or "Not Idea"
 
-        # Sort quality-wise and add line spacing
+        # Quality-wise links sorted & line gap
         def quality_sort_key(file):
+            q = file.get("quality", "").lower()
             try:
-                return int(re.search(r"\d+", file.get("quality", "")).group())
+                return int(re.search(r"\d+", q).group())
             except:
                 return 9999
 
@@ -166,7 +159,7 @@ async def send_movie_update(bot, file_name, files):
         await bot.send_message(LOG_CHANNEL, f"Error in send_movie_update: <code>{e}</code>")
 
 
-# --- Poster Fetch Helper ---
+# Jisshu Poster System
 async def fetch_jisshu_poster(title):
     async with aiohttp.ClientSession() as session:
         query = title.strip().replace(" ", "+")
@@ -185,7 +178,7 @@ async def fetch_jisshu_poster(title):
             return None
 
 
-# --- Utilities ---
+# Utility Functions
 def extract_year(text):
     match = re.search(r"\b(19|20)\d{2}\b", text)
     return match.group(0) if match else None
