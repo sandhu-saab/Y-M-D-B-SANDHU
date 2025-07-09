@@ -5,8 +5,7 @@ motor==3.7.0
 marshmallow==3.26.1
 umongo
 requests
-bs4
-cinemagoer
+beautifulsoup4
 shortzy
 datetime
 pytz
@@ -14,7 +13,7 @@ aiohttp
 
 # Master tools
 PyLeaves==1.0.2
-Wikipedia
+wikipedia 
 
 # Other tools
 opencv-python-headless==4.8.1.78
@@ -26,7 +25,6 @@ numpy
 wheel
 ujson
 wget
-pytz
 aiofiles
 dnspython==2.6.1
 python-decouple
@@ -48,3 +46,5 @@ googletrans==3.1.0a0
 telegraph==2.2.0
 gTTS==2.3.1
 
+# Git-based Packages
+git+https://github.com/DreamXBotz/cinemagoer.git
