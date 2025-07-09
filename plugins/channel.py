@@ -1,3 +1,4 @@
+# ✅ Fixed channel.py with HTML parse mode
 import re
 from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image
 from database.users_chats_db import db
@@ -5,7 +6,7 @@ from pyrogram import Client, filters
 from info import CHANNELS, MOVIE_UPDATE_CHANNEL
 from database.ia_filterdb import save_file
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from bot import temp  # Make sure temp.U_NAME is available
+from bot import temp
 
 CAPTION_LANGUAGES = [
     "Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu", "Malayalam", "Kannada",
@@ -82,21 +83,21 @@ async def send_msg(bot, filename, caption):
             if poster_url:
                 resized_poster = await fetch_image(poster_url)
 
-        movie_title = f"\ud83c\udfa5 {filename} ({year})" if year else f"\ud83c\udfa5 {filename}"
+        movie_title = f"🎥 {filename} ({year})" if year else f"🎥 {filename}"
         lang_line = f"{language}"
-        imdb_info = f"[\ud83c\udf1fIMDB Info (\u2b50\ufe0fRating {rating}/10)]({imdb_url})\nGenres : {genres}"
+        imdb_info = f"<b>🌟<a href='{imdb_url}'>IMDB Info (⭐️Rating {rating}/10)</a></b>\nGenres : {genres}"
         final_caption = f"{movie_title}\n{lang_line}\n\n{imdb_info}"
 
         filenames = filename.replace(" ", "-")
-        btn = [[InlineKeyboardButton("\ud83d\udcc2 ɢᴇᴛ ғɪʟᴇs", url=f"https://t.me/{temp.U_NAME}?start=getfile-{filenames}")]]
+        btn = [[InlineKeyboardButton("📂 ɢᴇᴛ ғɪʟᴇs", url=f"https://t.me/{temp.U_NAME}?start=getfile-{filenames}")]]
 
         if resized_poster:
             await bot.send_photo(
                 chat_id=MOVIE_UPDATE_CHANNEL,
                 photo=resized_poster,
-                caption=f"||{final_caption}||",
+                caption=final_caption,
                 reply_markup=InlineKeyboardMarkup(btn),
-                parse_mode="MarkdownV2",
+                parse_mode="HTML",
                 has_spoiler=True
             )
         else:
@@ -104,7 +105,7 @@ async def send_msg(bot, filename, caption):
                 chat_id=MOVIE_UPDATE_CHANNEL,
                 text=final_caption,
                 reply_markup=InlineKeyboardMarkup(btn),
-                parse_mode="MarkdownV2"
+                parse_mode="HTML"
             )
 
     except Exception as e:
