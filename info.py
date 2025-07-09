@@ -19,7 +19,7 @@ def is_enabled(value, default):
 # ============================
 SESSION = environ.get('SESSION', 'dreamxbotz_search')
 API_ID = int(environ.get('API_ID', '29882686'))
-API_HASH = environ.get('API_HASH', 'https://i.ibb.co/9mDYsVzc/photo-2025-06-29-08-14-56-7521281887633932296.jpg')
+API_HASH = environ.get('API_HASH', 'b642a25aee67b2aed02116df4a916bca')
 BOT_TOKEN = environ.get('BOT_TOKEN', "")
 
 # ============================
