@@ -27,9 +27,9 @@ async def media(bot, message):
     media.file_type = file_type
     media.caption = message.caption
     success, dreamxbotz = await save_file(media)
-    try:  
-        if success and dreamxbotz == 1 and await db.movie_update_status(bot.me.id):            
-            await send_msg(bot, file_name=media.file_name, caption=media.caption)
+    try:
+        if success and dreamxbotz == 1 and await db.movie_update_status(bot.me.id):
+            await send_msg(bot, filename=media.file_name, caption=media.caption)  # ✅ FIXED
     except Exception as e:
         print(f"Error In Movie Update - {e}")
         pass
@@ -83,7 +83,7 @@ async def send_msg(bot, filename, caption):
                 if poster_url:
                     resized_poster = await fetch_image(poster_url)
 
-        # 🆕 Final Caption Format
+        # ✅ Final Caption
         movie_title = f"🎥 {filename} ({year})" if year else f"🎥 {filename}"
         lang_line = f"{language}"
         imdb_info = f"[🌟IMDB Info (⭐️Rating {rating}/10)]({imdb_url})\nGenres : {genres}"
