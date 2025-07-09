@@ -5,7 +5,7 @@ from pyrogram import Client, filters
 from info import CHANNELS, MOVIE_UPDATE_CHANNEL
 from database.ia_filterdb import save_file
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from info import temp  # Make sure temp.U_NAME is available
+from bot import temp  # Make sure temp.U_NAME is available
 
 CAPTION_LANGUAGES = ["Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu", "Malayalam", "Kannada", "Marathi", "Punjabi", "Bengoli", "Gujrati", "Korean", "Gujarati", "Spanish", "French", "German", "Chinese", "Arabic", "Portuguese", "Russian", "Japanese", "Odia", "Assamese", "Urdu"]
 
