@@ -72,7 +72,7 @@ async def send_msg(bot, filename, caption):
                 if poster_url:
                     resized_poster = await fetch_image(poster_url)
 
-            text = "​<b>【 {} 】 🆕️\n\nFᴏʀᴍᴀᴛ: {}\n\nAᴜᴅɪᴏ: {}\n\nRᴀᴛɪɴɢ: {} /10\n\n<blockquote>👑 Pʀᴏᴠɪᴅᴇᴅ Bʏ : @Baii_Ji</blockquote></b>"
+            text = "​<b>【 {} 】 🆕️\n\nFᴏʀᴍᴀᴛ: {}\n\nAᴜᴅɪᴏ: {}\n\nRᴀᴛɪɴɢ: {} /10\n<blockquote>👑 Pʀᴏᴠɪᴅᴇᴅ Bʏ : @Baii_Ji</blockquote></b>"
             text = text.format(filename, quality, language, rating)
 
             search_movie = filename.replace(" ", '-')
