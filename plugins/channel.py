@@ -1,4 +1,4 @@
-# ✅ Final Fixed channel.py with safe HTML escaping (Namaste Edition)
+# ✅ Final channel.py (no parse mode, no HTML, no IMDb button)
 import re
 from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image
 from database.users_chats_db import db
@@ -7,7 +7,6 @@ from info import CHANNELS, MOVIE_UPDATE_CHANNEL
 from database.ia_filterdb import save_file
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from bot import temp
-from html import escape
 
 CAPTION_LANGUAGES = [
     "Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu", "Malayalam", "Kannada",
@@ -84,13 +83,9 @@ async def send_msg(bot, filename, caption):
             if poster_url:
                 resized_poster = await fetch_image(poster_url)
 
-        # 🧼 Escape user-generated content
-        safe_title = escape(f"🎥 {filename} ({year})" if year else f"🎥 {filename}")
-        safe_lang = escape(language)
-        safe_genres = escape(genres)
-
-        imdb_info = f"<b>🌟<a href='{imdb_url}'>IMDB Info (⭐️Rating {rating}/10)</a></b>\nGenres : {safe_genres}"
-        final_caption = f"{safe_title}\n{safe_lang}\n\n{imdb_info}"
+        movie_title = f"🎥 {filename} ({year})" if year else f"🎥 {filename}"
+        imdb_info = f"🌟IMDB Info (⭐️Rating {rating}/10)\nGenres : {genres}"
+        final_caption = f"{movie_title}\n{language}\n\n{imdb_info}"
 
         filenames = filename.replace(" ", "-")
         btn = [[InlineKeyboardButton("📂 ɢᴇᴛ ғɪʟᴇs", url=f"https://t.me/{temp.U_NAME}?start=getfile-{filenames}")]]
@@ -101,7 +96,7 @@ async def send_msg(bot, filename, caption):
                 photo=resized_poster,
                 caption=final_caption,
                 reply_markup=InlineKeyboardMarkup(btn),
-                parse_mode="HTML",
+                parse_mode=None,
                 has_spoiler=True
             )
         else:
@@ -109,7 +104,7 @@ async def send_msg(bot, filename, caption):
                 chat_id=MOVIE_UPDATE_CHANNEL,
                 text=final_caption,
                 reply_markup=InlineKeyboardMarkup(btn),
-                parse_mode="HTML"
+                parse_mode=None
             )
 
     except Exception as e:
