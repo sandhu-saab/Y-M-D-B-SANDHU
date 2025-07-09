@@ -1,4 +1,3 @@
-
 import pytz
 import datetime
 from Script import script 
@@ -9,6 +8,7 @@ import asyncio
 from pyrogram import Client, filters 
 from pyrogram.errors.exceptions.bad_request_400 import MessageTooLong
 from pyrogram.types import *
+
 
 @Client.on_message(filters.command("remove_premium") & filters.user(ADMINS))
 async def remove_premium(client, message):
@@ -26,26 +26,53 @@ async def remove_premium(client, message):
     else:
         await message.reply_text("ᴜꜱᴀɢᴇ : /remove_premium user_id") 
 
+
 @Client.on_message(filters.command("myplan"))
 async def myplan(client, message):
     try:
-        user = message.from_user.mention 
+        user = message.from_user.mention
         user_id = message.from_user.id
-        data = await db.get_user(message.from_user.id) 
+        data = await db.get_user(user_id)
+
         if data and data.get("expiry_time"):
-            expiry = data.get("expiry_time") 
+            expiry = data.get("expiry_time")
             expiry_ist = expiry.astimezone(pytz.timezone("Asia/Kolkata"))
-            expiry_str_in_ist = expiry.astimezone(pytz.timezone("Asia/Kolkata")).strftime("%d-%m-%Y\n⏱️ ᴇxᴘɪʀʏ ᴛɪᴍᴇ : %I:%M:%S %p")            
+            expiry_str_in_ist = expiry_ist.strftime("%d-%m-%Y\n⏱️ ᴇxᴘɪʀʏ ᴛɪᴍᴇ : %I:%M:%S %p")
+
             current_time = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
             time_left = expiry_ist - current_time
             days = time_left.days
             hours, remainder = divmod(time_left.seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
             time_left_str = f"{days} ᴅᴀʏꜱ, {hours} ʜᴏᴜʀꜱ, {minutes} ᴍɪɴᴜᴛᴇꜱ"
-            await message.reply_text(f"⚜️ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀ ᴅᴀᴛᴀ :\n\n👤 ᴜꜱᴇʀ : {user}\n⚡ ᴜꜱᴇʀ ɪᴅ : <code>{user_id}</code>\n⏰ ᴛɪᴍᴇ ʟᴇꜰᴛ : {time_left_str}\n⌛️ ᴇxᴘɪʀʏ ᴅᴀᴛᴇ : {expiry_str_in_ist}")   
+
+            caption = (
+                f"⚜️ <b>ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀ ᴅᴀᴛᴀ :</b>\n\n"
+                f"👤 <b>ᴜꜱᴇʀ :</b> {user}\n"
+                f"⚡ <b>ᴜꜱᴇʀ ɪᴅ :</b> <code>{user_id}</code>\n"
+                f"⏰ <b>ᴛɪᴍᴇ ʟᴇꜰᴛ :</b> {time_left_str}\n"
+                f"⌛️ <b>ᴇxᴘɪʀʏ ᴅᴀᴛᴇ :</b> {expiry_str_in_ist}"
+            )
+
+            await message.reply_photo(
+                photo=SUBSCRIPTION, 
+                caption=caption,
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("🔥 ᴇxᴛᴇɴᴅ ᴘʟᴀɴ", callback_data="premium_info")]]
+                )
+            )
         else:
-            await message.reply_text(f"<b>ʜᴇʏ {user},\n\nʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴀ ᴀᴄᴛɪᴠᴇ ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴ. ʙᴜʏ ᴏᴜʀ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ᴛᴏ ᴜꜱᴇ ᴘʀᴇᴍɪᴜᴍ ʙᴇɴᴇꜰɪᴛꜱ.<b>",
-	    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ᴄʜᴇᴄᴋᴏᴜᴛ ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴꜱ ", callback_data='premium_info')]]))
+            await message.reply_photo(
+                photo="https://i.ibb.co/gMrpRQWP/photo-2025-07-09-05-21-32-7524948058832896004.jpg", 
+                caption=(
+                    f"<b>ʜᴇʏ {user},\n\n"
+                    f"ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴀɴ ᴀᴄᴛɪᴠᴇ ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴ.\n"
+                    f"ʙᴜʏ ᴏᴜʀ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ᴛᴏ ᴇɴᴊᴏʏ ᴘʀᴇᴍɪᴜᴍ ʙᴇɴᴇꜰɪᴛꜱ.</b>"
+                ),
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("💎 ᴄʜᴇᴄᴋᴏᴜᴛ ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴꜱ", callback_data='premium_info')]]
+                )
+            )
     except Exception as e:
         print(e)
 
@@ -137,7 +164,7 @@ async def plan(client, message):
         f"<b><u>🚫 ᴛʜɪs ᴜsᴇʀs ᴛʀʏ ᴛᴏ ᴄʜᴇᴄᴋ /plan</u> {temp.B_LINK}\n\n"
         f"- ɪᴅ - `{user_id}`\n- ɴᴀᴍᴇ - {users}</b>")
     btn = [[
-            InlineKeyboardButton('• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •', callback_data='premium_info'),
+            InlineKeyboardButton('• ʙᴜʏ ᴘʀᴇᴍɪᴜᴍ •', callback_data='buy_info'),
         ],[
             InlineKeyboardButton('• ʀᴇꜰᴇʀ ꜰʀɪᴇɴᴅꜱ', callback_data='reffff'),
             InlineKeyboardButton('ꜰʀᴇᴇ ᴛʀɪᴀʟ •', callback_data='free')
@@ -228,5 +255,3 @@ async def successful_premium_payment(client, message):
     except Exception as e:
         print(f"Error Processing Premium Payment: {e}")
         await message.reply("✅ Thank You For Your Payment! (Error Logging Details)")
-
-
