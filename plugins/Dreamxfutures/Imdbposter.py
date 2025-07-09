@@ -1,3 +1,4 @@
+# ✅ Fixed Imdbposter.py with plot cleanup and safe parsing
 import re
 import aiohttp
 from io import BytesIO
@@ -13,7 +14,7 @@ def list_to_str(lst):
         return ", ".join(map(str, lst))
     return ""
 
-# ✅ ORIGINAL SIZE POSTER FETCH (NO RESIZE)
+# ✅ Fetch original size IMDb poster (no resize)
 async def fetch_image(url):
     if not DREAMXBOTZ_IMAGE_FETCH:
         print("Image fetching is disabled.")
@@ -36,6 +37,7 @@ async def fetch_image(url):
         print(f"Unexpected error in fetch_image: {e}")
     return None
 
+# ✅ Improved movie details extraction
 async def get_movie_details(query, id=False, file=None):
     try:
         if not id:
@@ -46,7 +48,7 @@ async def get_movie_details(query, id=False, file=None):
                 year = list_to_str(year[:1])
                 title = query.replace(year, "").strip()
             elif file is not None:
-                year = re.findall(r'[1-2]\d{3}', file, re.IGNORECASE)
+                year = re.findall(r'[1-2]\d{3}', file.strip(), re.IGNORECASE)
                 if year:
                     year = list_to_str(year[:1])
             else:
@@ -84,8 +86,10 @@ async def get_movie_details(query, id=False, file=None):
         else:
             plot = movie.get('plot outline')
 
-        if plot and len(plot) > 800:
-            plot = plot[:800] + "..."
+        if isinstance(plot, str):
+            plot = re.sub(r"\{.*?\}", "", plot).replace("::", ":").strip()
+            if len(plot) > 800:
+                plot = plot[:800] + "..."
 
         poster_url = movie.get('full-size cover url')
 
