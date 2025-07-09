@@ -1,4 +1,3 @@
-# ✅ Final channel.py (no parse mode, no HTML, no IMDb button)
 import re
 from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image
 from database.users_chats_db import db
@@ -6,18 +5,15 @@ from pyrogram import Client, filters
 from info import CHANNELS, MOVIE_UPDATE_CHANNEL
 from database.ia_filterdb import save_file
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from bot import temp
+from utils import temp
 
-CAPTION_LANGUAGES = [
-    "Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu", "Malayalam", "Kannada",
-    "Marathi", "Punjabi", "Bengoli", "Gujrati", "Korean", "Gujarati", "Spanish", "French", "German",
-    "Chinese", "Arabic", "Portuguese", "Russian", "Japanese", "Odia", "Assamese", "Urdu"
-]
+CAPTION_LANGUAGES = ["Bhojpuri", "Hindi", "Bengali", "Tamil", "English", "Bangla", "Telugu", "Malayalam", "Kannada", "Marathi", "Punjabi", "Bengoli", "Gujrati", "Korean", "Gujarati", "Spanish", "French", "German", "Chinese", "Arabic", "Portuguese", "Russian", "Japanese", "Odia", "Assamese", "Urdu"]
 
 media_filter = filters.document | filters.video | filters.audio
 
 @Client.on_message(filters.chat(CHANNELS) & media_filter)
 async def media(bot, message):
+    """Media Handler"""
     for file_type in ("document", "video", "audio"):
         media = getattr(message, file_type, None)
         if media is not None:
@@ -27,18 +23,17 @@ async def media(bot, message):
     media.file_type = file_type
     media.caption = message.caption
     success, dreamxbotz = await save_file(media)
-    try:
-        if success and dreamxbotz == 1 and await db.movie_update_status(bot.me.id):
+    try:  
+        if success and dreamxbotz == 1 and await db.movie_update_status(bot.me.id):            
             await send_msg(bot, filename=media.file_name, caption=media.caption)
     except Exception as e:
         print(f"Error In Movie Update - {e}")
-
+        pass
 
 def clean_mentions_links(text: str) -> str:
     return re.sub(r'(\@\w+(\.\w+)?|\bwww\.[^\s\]\)]+|\([\@^\)]+\)|\[[\@^\]]+\])', '', text).strip()
 
-
-async def send_msg(bot, filename, caption):
+async def send_msg(bot, filename, caption): 
     try:
         filename = clean_mentions_links(filename).title()
         caption = clean_mentions_links(caption).lower()
@@ -47,71 +42,53 @@ async def send_msg(bot, filename, caption):
 
         pattern = r"(?i)(?:s|season)0*(\d{1,2})"
         season = re.search(pattern, caption) or re.search(pattern, filename)
-        season = season.group(1) if season else None
+        season = season.group(1) if season else None 
 
         if year:
-            filename = filename[: filename.find(year) + 4]
+            filename = filename[: filename.find(year) + 4]  
         elif season and season in filename:
             filename = filename[: filename.find(season) + 1]
 
-        qualities = [
-            "ORG", "org", "hdcam", "HDCAM", "HQ", "hq", "HDRip", "hdrip", "camrip", "CAMRip",
-            "hdtc", "predvd", "DVDscr", "dvdscr", "dvdrip", "HDTC", "dvdscreen", "HDTS", "hdts"
-        ]
+        qualities = ["ORG", "org", "hdcam", "HDCAM", "HQ", "hq", "HDRip", "hdrip", "camrip", "CAMRip", "hdtc", "predvd", "DVDscr", "dvdscr", "dvdrip", "HDTC", "dvdscreen", "HDTS", "hdts"]
         quality = await get_qualities(caption.lower(), qualities) or "HDRip"
 
         language = ""
-        for lang in CAPTION_LANGUAGES:
+        possible_languages = CAPTION_LANGUAGES
+        for lang in possible_languages:
             if lang.lower() in caption.lower():
                 language += f"{lang}, "
-        language = language[:-2] if language else "Not idea \ud83d\ude04"
+        language = language[:-2] if language else "Not idea 😄"
 
         filename = re.sub(r"[\(\)\[\]\{\}:;'\-!]", "", filename)
         filename = re.sub(r"\s+", " ", filename).strip()
-
+        
         rating = "N/A"
-        genres = "N/A"
-        imdb_url = "#"
         resized_poster = None
+        if await db.add_name(filename):
+            imdb = await get_movie_details(filename)
+            if imdb:
+                poster_url = imdb.get('poster_url')
+                rating = imdb.get("rating", "N/A")
+                if poster_url:
+                    resized_poster = await fetch_image(poster_url)
 
-        imdb = await get_movie_details(filename)
-        if imdb:
-            poster_url = imdb.get('poster_url')
-            rating = imdb.get("rating", "N/A")
-            genres = imdb.get("genres", "N/A")
-            imdb_url = imdb.get("url", "#")
-            if poster_url:
-                resized_poster = await fetch_image(poster_url)
+            text = "​<b>【 {} 】 🆕️\n\nFᴏʀᴍᴀᴛ: {}\n\nAᴜᴅɪᴏ: {}\n\nRᴀᴛɪɴɢ: {} /10\n\n<blockquote>👑 Pʀᴏᴠɪᴅᴇᴅ Bʏ : @Baii_Ji</blockquote></b>"
+            text = text.format(filename, quality, language, rating)
 
-        movie_title = f"🎥 {filename} ({year})" if year else f"🎥 {filename}"
-        imdb_info = f"🌟IMDB Info (⭐️Rating {rating}/10)\nGenres : {genres}"
-        final_caption = f"{movie_title}\n{language}\n\n{imdb_info}"
+            search_movie = filename.replace(" ", '-')
+            btn = [[InlineKeyboardButton(' Gᴇᴛ Fɪʟᴇs ', url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{search_movie}")]]
 
-        filenames = filename.replace(" ", "-")
-        btn = [[InlineKeyboardButton("📂 ɢᴇᴛ ғɪʟᴇs", url=f"https://t.me/{temp.U_NAME}?start=getfile-{filenames}")]]
-
-        if resized_poster:
-            await bot.send_photo(
-                chat_id=MOVIE_UPDATE_CHANNEL,
-                photo=resized_poster,
-                caption=final_caption,
-                reply_markup=InlineKeyboardMarkup(btn),
-                parse_mode=None,
-                has_spoiler=True
-            )
-        else:
-            await bot.send_message(
-                chat_id=MOVIE_UPDATE_CHANNEL,
-                text=final_caption,
-                reply_markup=InlineKeyboardMarkup(btn),
-                parse_mode=None
-            )
+            if resized_poster:
+                await bot.send_photo(chat_id=MOVIE_UPDATE_CHANNEL, photo=resized_poster, caption=text, reply_markup=InlineKeyboardMarkup(btn))
+            else:
+                await bot.send_message(chat_id=MOVIE_UPDATE_CHANNEL, text=text, reply_markup=InlineKeyboardMarkup(btn))
 
     except Exception as e:
         print(f"Error in send_msg: {e}")
-
+        pass
 
 async def get_qualities(text, qualities: list):
+    """Get all Quality from text"""
     quality = []
     for q in qualities:
         if q in text:
