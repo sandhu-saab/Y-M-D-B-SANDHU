@@ -13,7 +13,8 @@ def list_to_str(lst):
         return ", ".join(map(str, lst))
     return ""
 
-async def fetch_image(url, size=(720, 720)):
+# ✅ ORIGINAL SIZE POSTER FETCH (NO RESIZE)
+async def fetch_image(url):
     if not DREAMXBOTZ_IMAGE_FETCH:
         print("Image fetching is disabled.")
         return None
@@ -22,10 +23,7 @@ async def fetch_image(url, size=(720, 720)):
             async with session.get(url) as response:
                 if response.status == 200:
                     content = await response.read()
-                    img = Image.open(BytesIO(content))
-                    img = img.resize(size, Image.LANCZOS)
-                    img_byte_arr = BytesIO()
-                    img.save(img_byte_arr, format='JPEG')
+                    img_byte_arr = BytesIO(content)
                     img_byte_arr.seek(0)
                     return img_byte_arr
                 else:
@@ -53,6 +51,7 @@ async def get_movie_details(query, id=False, file=None):
                     year = list_to_str(year[:1])
             else:
                 year = None
+
             movieid = ia.search_movie(title.lower(), results=10)
             if not movieid:
                 return None
@@ -62,27 +61,34 @@ async def get_movie_details(query, id=False, file=None):
                     filtered = movieid
             else:
                 filtered = movieid
+
             movieid = list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered))
             if not movieid:
                 movieid = filtered
             movieid = movieid[0].movieID
         else:
             movieid = query
+
         movie = ia.get_movie(movieid)
+
         if movie.get("original air date"):
             date = movie["original air date"]
         elif movie.get("year"):
             date = movie.get("year")
         else:
             date = "N/A"
+
         plot = movie.get('plot')
         if plot and len(plot) > 0:
             plot = plot[0]
         else:
             plot = movie.get('plot outline')
+
         if plot and len(plot) > 800:
             plot = plot[:800] + "..."
+
         poster_url = movie.get('full-size cover url')
+
         return {
             'title': movie.get('title'),
             'votes': movie.get('votes'),
@@ -106,12 +112,13 @@ async def get_movie_details(query, id=False, file=None):
             "distributors": list_to_str(movie.get("distributors")),
             'release_date': date,
             'year': movie.get('year'),
-            'genres': list_to_str(movie.get("genres")),  # Genres as comma-separated string
+            'genres': list_to_str(movie.get("genres")),
             'poster_url': poster_url,
             'plot': plot,
             'rating': str(movie.get("rating", "N/A")),
-            'url': f'https://www.imdb.com/title/tt{movieid}'  # IMDb URL
+            'url': f'https://www.imdb.com/title/tt{movieid}'
         }
+
     except Exception as e:
         print(f"An error occurred in get_movie_details: {e}")
         return None
