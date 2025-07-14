@@ -118,7 +118,7 @@ async def reaction_handler(client, query: CallbackQuery):
                 InlineKeyboardButton(f"🔥 {reaction_counts[unique_id]['🔥']}", callback_data=f"r_{unique_id}_fire"),
             ],
             [
-                InlineKeyboardButton('📂 Gᴇᴛ Fɪʟᴇ 📂', url=f"https://t.me/{temp.U_NAME}?start=getfile-{unique_id}"),
+                InlineKeyboardButton('📂 Gᴇᴛ Fɪʟᴇ 📂', url=f"https://t.me/{temp.U_NAME}?start=getfile-{filename.replace(' ', '-')}"),
                 InlineKeyboardButton('📽️ Tᴏᴛᴜʀɪᴀʟ', url="https://t.me/+dVRLYHXJztJlMmY9")
             ]
         ]
