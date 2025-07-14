@@ -119,7 +119,7 @@ async def reaction_handler(client, query: CallbackQuery):
             ],
             [
                 InlineKeyboardButton('📂 Gᴇᴛ Fɪʟᴇ 📂', url=f"https://t.me/{temp.U_NAME}?start=getfile-{filename.replace(' ', '-')}"),
-                InlineKeyboardButton('📽️ Tᴏᴛᴜʀɪᴀʟ', url="https://t.me/+dVRLYHXJztJlMmY9")
+                InlineKeyboardButton('♻️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ♻️', url="https://t.me/+dVRLYHXJztJlMmY9")
             ]
         ]
 
@@ -204,7 +204,7 @@ async def send_msg(bot, filename, caption):
         ],
         [
             InlineKeyboardButton('📂 Gᴇᴛ Fɪʟᴇ 📂', url=f"https://t.me/{temp.U_NAME}?start=getfile-{unique_id}"),
-            InlineKeyboardButton('📽️ Tᴏᴛᴜʀɪᴀʟ', url="https://t.me/+dVRLYHXJztJlMmY9")
+            InlineKeyboardButton('♻️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ♻️', url="https://t.me/+dVRLYHXJztJlMmY9")
         ]
     ])
 
