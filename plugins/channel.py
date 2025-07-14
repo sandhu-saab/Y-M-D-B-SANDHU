@@ -191,6 +191,12 @@ async def send_msg(bot, filename, caption):
         except Exception as img_err:
             logger.warning("Image fetch error for '%s': %s", poster_url, img_err, exc_info=True)
 
+    if not resized_poster:
+        try:
+            resized_poster = await fetch_image("https://te.legra.ph/file/88d845b4f8a024a71465d.jpg")
+        except:
+            resized_poster = None
+
     unique_id = generate_unique_id(filename)
     reaction_counts[unique_id] = {"❤️": 0, "👍": 0, "👎": 0, "🔥": 0}
     user_reactions[unique_id] = {}
