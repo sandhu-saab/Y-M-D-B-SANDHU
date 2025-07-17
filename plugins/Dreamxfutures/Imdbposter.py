@@ -1,7 +1,6 @@
 import re
 import aiohttp
 from io import BytesIO
-from PIL import Image
 from info import DREAMXBOTZ_IMAGE_FETCH
 from imdb import Cinemagoer
 
@@ -13,7 +12,7 @@ def list_to_str(lst):
         return ", ".join(map(str, lst))
     return ""
 
-async def fetch_image(url, size=(860, 1200)): #fixed square img
+async def fetch_image(url):
     if not DREAMXBOTZ_IMAGE_FETCH:
         print("Image fetching is disabled.")
         return None
@@ -22,18 +21,13 @@ async def fetch_image(url, size=(860, 1200)): #fixed square img
             async with session.get(url) as response:
                 if response.status == 200:
                     content = await response.read()
-                    img = Image.open(BytesIO(content))
-                    img = img.resize(size, Image.LANCZOS)
-                    img_byte_arr = BytesIO()
-                    img.save(img_byte_arr, format='JPEG')
+                    img_byte_arr = BytesIO(content)
                     img_byte_arr.seek(0)
                     return img_byte_arr
                 else:
                     print(f"Failed to fetch image: {response.status}")
     except aiohttp.ClientError as e:
         print(f"HTTP request error in fetch_image: {e}")
-    except IOError as e:
-        print(f"IO error in fetch_image: {e}")
     except Exception as e:
         print(f"Unexpected error in fetch_image: {e}")
     return None
@@ -69,7 +63,7 @@ async def get_movie_details(query, id=False, file=None):
         else:
             movieid = query
         movie = ia.get_movie(movieid)
-        ia.update(movie, info=['main', 'vote details']) # or else you won't get ratings
+        ia.update(movie, info=['main', 'vote details'])
         if movie.get("original air date"):
             date = movie["original air date"]
         elif movie.get("year"):
