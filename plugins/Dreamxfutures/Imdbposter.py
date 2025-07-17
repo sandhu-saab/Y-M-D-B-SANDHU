@@ -109,20 +109,20 @@ async def get_poster_from_bharath_api(query):
             async with session.get(api_url, timeout=10) as resp:
                 if resp.status == 200:
                     data = await resp.json()
+                    print("Poster API Response:", data)  # Debug line
                     posters = data.get('posters', [])
                     
-                    # SAFE CHECK: Ensure posters exist and have URL
-                    if posters and isinstance(posters, list) and len(posters) > 0:
-                        if 'url' in posters[0] and posters[0]['url']:
-                            return posters[0]['url']
-                    
-                    print(f"No valid posters found for: {query}")
+                    if posters and isinstance(posters, list):
+                        for poster in posters:
+                            if poster.get('url'):
+                                return poster['url']
+                    print(f"No valid poster URL found for: {query}")
                 else:
                     print(f"API Error: Status {resp.status} for {query}")
     except asyncio.TimeoutError:
         print(f"Timeout while fetching poster for: {query}")
     except Exception as e:
-        print(f"Error fetching poster: {str(e)}")
+        print(f"Error in get_poster_from_bharath_api: {str(e)}")
     return None
 
 async def get_landscape_poster_from_bharath_api(query):
@@ -132,18 +132,18 @@ async def get_landscape_poster_from_bharath_api(query):
             async with session.get(api_url, timeout=10) as resp:
                 if resp.status == 200:
                     data = await resp.json()
+                    print("Landscape API Response:", data)  # Debug line
                     backdrops = data.get('backdrops', [])
                     
-                    # SAFE CHECK: Ensure backdrops exist
-                    if backdrops and isinstance(backdrops, list) and len(backdrops) > 0:
-                        if 'url' in backdrops[0] and backdrops[0]['url']:
-                            return backdrops[0]['url']
-                    
-                    print(f"No valid backdrops found for: {query}")
+                    if backdrops and isinstance(backdrops, list):
+                        for backdrop in backdrops:
+                            if backdrop.get('url'):
+                                return backdrop['url']
+                    print(f"No valid backdrop URL found for: {query}")
                 else:
                     print(f"API Error: Status {resp.status} for {query}")
     except asyncio.TimeoutError:
         print(f"Timeout while fetching backdrop for: {query}")
     except Exception as e:
-        print(f"Error fetching backdrop: {str(e)}")
+        print(f"Error in get_landscape_poster_from_bharath_api: {str(e)}")
     return None
