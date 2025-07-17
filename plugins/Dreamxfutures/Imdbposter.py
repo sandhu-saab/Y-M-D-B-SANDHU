@@ -20,7 +20,7 @@ async def fetch_image(url, size=None):
             async with session.get(url) as response:
                 if response.status == 200:
                     content = await response.read()
-                    return BytesIO(content)  # ✅ No Resize — Raw Image Return
+                    return BytesIO(content)
                 else:
                     print(f"Failed to fetch image: {response.status}")
     except Exception as e:
@@ -32,12 +32,12 @@ async def get_movie_details(query, id=False, file=None):
         if not id:
             query = query.strip().lower()
             title = query
-            year = re.findall(r'[1-2]\\d{3}$', query, re.IGNORECASE)
+            year = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
             if year:
                 year = list_to_str(year[:1])
                 title = query.replace(year, "").strip()
             elif file is not None:
-                year = re.findall(r'[1-2]\\d{3}', file, re.IGNORECASE)
+                year = re.findall(r'[1-2]\d{3}', file, re.IGNORECASE)
                 if year:
                     year = list_to_str(year[:1])
             else:
@@ -97,7 +97,7 @@ async def get_movie_details(query, id=False, file=None):
         }
     except Exception as e:
         print(f"An error occurred in get_movie_details: {e}")
-        return None
+    return None
 
 async def get_poster_from_bharath_api(query):
     try:
@@ -106,10 +106,9 @@ async def get_poster_from_bharath_api(query):
             async with session.get(api_url) as resp:
                 if resp.status == 200:
                     data = await resp.json()
-                    try:
-                        return data['posters'][0]['url']
-                    except:
-                        return None
+                    posters = data.get('posters', [])
+                    if posters and 'url' in posters[0]:
+                        return posters[0]['url']
     except Exception as e:
         print(f"Error fetching poster from Bharath API: {e}")
     return None
@@ -121,10 +120,9 @@ async def get_landscape_poster_from_bharath_api(query):
             async with session.get(api_url) as resp:
                 if resp.status == 200:
                     data = await resp.json()
-                    try:
-                        return data['backdrops'][0]['url']
-                    except:
-                        return None
+                    backdrops = data.get('backdrops', [])
+                    if backdrops and 'url' in backdrops[0]:
+                        return backdrops[0]['url']
     except Exception as e:
         print(f"Error fetching backdrop from Bharath API: {e}")
     return None
