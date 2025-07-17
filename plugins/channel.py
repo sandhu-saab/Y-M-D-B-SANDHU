@@ -1,7 +1,7 @@
 import re
 import logging
 from urllib.parse import quote
-from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image, get_poster_from_bharath_api
+from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image, get_poster_from_bharath_api, get_landscape_poster_from_bharath_api
 from database.users_chats_db import db
 from pyrogram import Client, filters, enums
 from info import CHANNELS, MOVIE_UPDATE_CHANNEL, LINK_PREVIEW, ABOVE_PREVIEW
@@ -184,7 +184,9 @@ async def send_msg(bot, filename, caption):
     except Exception as imdb_err:
         logger.warning("IMDB fetch error for '%s': %s", filename, imdb_err, exc_info=True)
 
-    poster_url = await get_poster_from_bharath_api(quote(filename))
+    poster_url = await get_landscape_poster_from_bharath_api(quote(filename))
+    if not poster_url:
+        poster_url = await get_poster_from_bharath_api(quote(filename))
 
     if poster_url:
         try:
