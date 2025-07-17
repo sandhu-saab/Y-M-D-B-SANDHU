@@ -1,33 +1,41 @@
 import re
 import aiohttp
 from io import BytesIO
+from PIL import Image
 from info import DREAMXBOTZ_IMAGE_FETCH
 from imdb import Cinemagoer
-import asyncio
 
 ia = Cinemagoer()
+LONG_IMDB_DESCRIPTION = False
 
 def list_to_str(lst):
     if lst:
         return ", ".join(map(str, lst))
     return ""
 
-async def fetch_image(url, size=None, timeout=10):
+async def fetch_image(url, size=(860, 1200)): #fixed square img
     if not DREAMXBOTZ_IMAGE_FETCH:
         print("Image fetching is disabled.")
         return None
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=timeout) as response:
+            async with session.get(url) as response:
                 if response.status == 200:
                     content = await response.read()
-                    return BytesIO(content)
+                    img = Image.open(BytesIO(content))
+                    img = img.resize(size, Image.LANCZOS)
+                    img_byte_arr = BytesIO()
+                    img.save(img_byte_arr, format='JPEG')
+                    img_byte_arr.seek(0)
+                    return img_byte_arr
                 else:
                     print(f"Failed to fetch image: {response.status}")
-    except asyncio.TimeoutError:
-        print(f"Timeout while fetching image: {url}")
+    except aiohttp.ClientError as e:
+        print(f"HTTP request error in fetch_image: {e}")
+    except IOError as e:
+        print(f"IO error in fetch_image: {e}")
     except Exception as e:
-        print(f"Error in fetch_image: {e}")
+        print(f"Unexpected error in fetch_image: {e}")
     return None
 
 async def get_movie_details(query, id=False, file=None):
@@ -61,11 +69,18 @@ async def get_movie_details(query, id=False, file=None):
         else:
             movieid = query
         movie = ia.get_movie(movieid)
-        ia.update(movie, info=['main', 'vote details'])
-        date = movie.get("original air date") or movie.get("year") or "N/A"
-        plot = movie.get('plot') or movie.get('plot outline')
+        ia.update(movie, info=['main', 'vote details']) # or else you won't get ratings
+        if movie.get("original air date"):
+            date = movie["original air date"]
+        elif movie.get("year"):
+            date = movie.get("year")
+        else:
+            date = "N/A"
+        plot = movie.get('plot')
         if plot and len(plot) > 0:
             plot = plot[0]
+        else:
+            plot = movie.get('plot outline')
         if plot and len(plot) > 800:
             plot = plot[:800] + "..."
         poster_url = movie.get('full-size cover url')
@@ -100,50 +115,4 @@ async def get_movie_details(query, id=False, file=None):
         }
     except Exception as e:
         print(f"An error occurred in get_movie_details: {e}")
-    return None
-
-async def get_poster_from_bharath_api(query):
-    try:
-        api_url = f"https://bharathboyapis.vercel.app/api/movie-posters?query={query}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(api_url, timeout=10) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    posters = data.get('posters', [])
-                    
-                    # SAFE CHECK: Ensure posters exist and have URL
-                    if posters and isinstance(posters, list) and len(posters) > 0:
-                        if 'url' in posters[0] and posters[0]['url']:
-                            return posters[0]['url']
-                    
-                    print(f"No valid posters found for: {query}")
-                else:
-                    print(f"API Error: Status {resp.status} for {query}")
-    except asyncio.TimeoutError:
-        print(f"Timeout while fetching poster for: {query}")
-    except Exception as e:
-        print(f"Error fetching poster: {str(e)}")
-    return None
-
-async def get_landscape_poster_from_bharath_api(query):
-    try:
-        api_url = f"https://bharathboyapis.vercel.app/api/movie-posters?query={query}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(api_url, timeout=10) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    backdrops = data.get('backdrops', [])
-                    
-                    # SAFE CHECK: Ensure backdrops exist
-                    if backdrops and isinstance(backdrops, list) and len(backdrops) > 0:
-                        if 'url' in backdrops[0] and backdrops[0]['url']:
-                            return backdrops[0]['url']
-                    
-                    print(f"No valid backdrops found for: {query}")
-                else:
-                    print(f"API Error: Status {resp.status} for {query}")
-    except asyncio.TimeoutError:
-        print(f"Timeout while fetching backdrop for: {query}")
-    except Exception as e:
-        print(f"Error fetching backdrop: {str(e)}")
-    return None
+        return None
