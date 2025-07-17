@@ -1,6 +1,6 @@
 import re
 import logging
-from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image
+from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image, get_poster_from_bharath_api
 from database.users_chats_db import db
 from pyrogram import Client, filters, enums
 from info import CHANNELS, MOVIE_UPDATE_CHANNEL, LINK_PREVIEW, ABOVE_PREVIEW
@@ -150,7 +150,7 @@ async def send_msg(bot, filename, caption):
     tag = "#SERIES" if season else "#MOVIE"
     ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
 
-    filename = re.sub(r"[()\[\]{}:;'\-!,.?_]", " ", filename)
+    filename = re.sub(r"[()\[\]{}:;\'\-!,.?_]", " ", filename)
     filename = re.sub(r"\s+", " ", filename).strip()
 
     try:
@@ -180,10 +180,11 @@ async def send_msg(bot, filename, caption):
             genres_filtered = [g for g in raw_genres if g in STANDARD_GENRES]
             genres = ", ".join(genres_filtered) if genres_filtered else "N/A"
             rating = details.get("rating", "N/A")
-            poster_url = details.get("poster_url", None)
             imdb_url = details.get("url", None)
     except Exception as imdb_err:
         logger.warning("IMDB fetch error for '%s': %s", filename, imdb_err, exc_info=True)
+
+    poster_url = await get_poster_from_bharath_api(filename)
 
     if poster_url:
         try:
