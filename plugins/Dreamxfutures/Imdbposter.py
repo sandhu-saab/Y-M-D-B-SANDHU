@@ -1,12 +1,10 @@
 import re
 import aiohttp
 from io import BytesIO
-from PIL import Image
 from info import DREAMXBOTZ_IMAGE_FETCH
 from imdb import Cinemagoer
 
 ia = Cinemagoer()
-LONG_IMDB_DESCRIPTION = False
 
 def list_to_str(lst):
     if lst:
@@ -22,16 +20,7 @@ async def fetch_image(url, size=None):
             async with session.get(url) as response:
                 if response.status == 200:
                     content = await response.read()
-                    img = Image.open(BytesIO(content))
-                    img_byte_arr = BytesIO()
-                    if size:
-                        try:
-                            img = img.resize(size, Image.LANCZOS)
-                        except Exception as resize_err:
-                            print(f"Resize failed: {resize_err}")
-                    img.save(img_byte_arr, format='JPEG')
-                    img_byte_arr.seek(0)
-                    return img_byte_arr
+                    return BytesIO(content)  # ✅ No Resize — Raw Image Return
                 else:
                     print(f"Failed to fetch image: {response.status}")
     except Exception as e:
@@ -43,12 +32,12 @@ async def get_movie_details(query, id=False, file=None):
         if not id:
             query = query.strip().lower()
             title = query
-            year = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
+            year = re.findall(r'[1-2]\\d{3}$', query, re.IGNORECASE)
             if year:
                 year = list_to_str(year[:1])
                 title = query.replace(year, "").strip()
             elif file is not None:
-                year = re.findall(r'[1-2]\d{3}', file, re.IGNORECASE)
+                year = re.findall(r'[1-2]\\d{3}', file, re.IGNORECASE)
                 if year:
                     year = list_to_str(year[:1])
             else:
@@ -70,17 +59,10 @@ async def get_movie_details(query, id=False, file=None):
             movieid = query
         movie = ia.get_movie(movieid)
         ia.update(movie, info=['main', 'vote details'])
-        if movie.get("original air date"):
-            date = movie["original air date"]
-        elif movie.get("year"):
-            date = movie.get("year")
-        else:
-            date = "N/A"
-        plot = movie.get('plot')
+        date = movie.get("original air date") or movie.get("year") or "N/A"
+        plot = movie.get('plot') or movie.get('plot outline')
         if plot and len(plot) > 0:
             plot = plot[0]
-        else:
-            plot = movie.get('plot outline')
         if plot and len(plot) > 800:
             plot = plot[:800] + "..."
         poster_url = movie.get('full-size cover url')
