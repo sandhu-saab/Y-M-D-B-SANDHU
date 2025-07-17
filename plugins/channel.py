@@ -140,7 +140,7 @@ async def send_msg(bot, filename, caption):
     language = ", ".join(language_set) if language_set else "N/A"
     tag = "#SERIES" if season else "#MOVIE"
     ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
-    filename = re.sub(r"[()\[\]{}:;\'-!,.?_]", " ", filename)
+    filename = re.sub(r"[()\[\]{}:;\'\-!,._?]", " ", filename)
     filename = re.sub(r"\s+", " ", filename).strip()
     try:
         result = await db.filename_col.update_one({"_id": filename}, {"$setOnInsert": {"_id": filename}}, upsert=True)
