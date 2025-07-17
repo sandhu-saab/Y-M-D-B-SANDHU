@@ -46,8 +46,7 @@ QUALITIES = [
     "HDCam", "HDTC", "CamRip", "TS", "TC", "TeleSync",
     "DVDScr", "DVDRip", "PreDVD",
     "WEBRip", "WEB-DL", "TVRip", "HDTV",
-    "BluRay", "BRRip", "BDRip",
-    "360p", "480p", "720p", "1080p", "2160p", "4K",
+    "BluRay", "BRRip", "BDRip", "4K",
     "HEVC", "HDRip"
 ]
 
