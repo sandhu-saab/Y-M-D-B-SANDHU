@@ -1,5 +1,6 @@
 import re
 import logging
+import asyncio
 from urllib.parse import quote
 from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image, get_poster_from_bharath_api, get_landscape_poster_from_bharath_api
 from database.users_chats_db import db
@@ -12,6 +13,9 @@ from utils import temp
 from pymongo.errors import PyMongoError
 
 logger = logging.getLogger(__name__)
+
+# Default poster URL constant
+DEFAULT_POSTER_URL = "https://te.legra.ph/file/88d845b4f8a024a71465d.jpg"
 
 CAPTION_LANGUAGES = {
     "hin": "Hindi", "hindi": "Hindi",
@@ -166,19 +170,52 @@ async def send_msg(bot, filename, caption):
             imdb_url = details.get("url", None)
     except Exception as imdb_err:
         logger.warning("IMDB fetch error for '%s': %s", filename, imdb_err, exc_info=True)
-    poster_url = await get_landscape_poster_from_bharath_api(quote(filename))
+    
+    # Improved poster handling with timeouts and fallbacks
+    poster_url = None
+    try:
+        poster_url = await asyncio.wait_for(
+            get_landscape_poster_from_bharath_api(quote(filename)),
+            timeout=8
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Landscape poster API timed out for: %s", filename)
+    
     if not poster_url:
-        poster_url = await get_poster_from_bharath_api(quote(filename))
-    if poster_url:
         try:
-            resized_poster = await fetch_image(poster_url)
-        except Exception as img_err:
-            logger.warning("Image fetch error for '%s': %s", poster_url, img_err, exc_info=True)
+            poster_url = await asyncio.wait_for(
+                get_poster_from_bharath_api(quote(filename)),
+                timeout=8
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Regular poster API timed out for: %s", filename)
+    
+    # Final fallback to default poster URL
+    if not poster_url:
+        poster_url = DEFAULT_POSTER_URL
+        logger.info("Using default poster for: %s", filename)
+    
+    # Download poster image with timeout
+    if poster_url and poster_url != DEFAULT_POSTER_URL:
+        try:
+            resized_poster = await asyncio.wait_for(
+                fetch_image(poster_url, timeout=10),
+                timeout=12
+            )
+        except (asyncio.TimeoutError, Exception) as img_err:
+            logger.warning("Image download failed for %s: %s", poster_url, img_err)
+    
+    # If still no poster, use default
     if not resized_poster:
         try:
-            resized_poster = await fetch_image("https://te.legra.ph/file/88d845b4f8a024a71465d.jpg")
-        except:
+            resized_poster = await asyncio.wait_for(
+                fetch_image(DEFAULT_POSTER_URL, timeout=8),
+                timeout=10
+            )
+        except Exception:
             resized_poster = None
+            logger.error("Failed to download default poster")
+    
     unique_id = generate_unique_id(filename)
     reaction_counts[unique_id] = {"❤️": 0, "👍": 0, "👎": 0, "🔥": 0}
     user_reactions[unique_id] = {}
