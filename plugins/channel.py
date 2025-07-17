@@ -14,7 +14,6 @@ from pymongo.errors import PyMongoError
 
 logger = logging.getLogger(__name__)
 
-# Default poster URL constant
 DEFAULT_POSTER_URL = "https://te.legra.ph/file/88d845b4f8a024a71465d.jpg"
 
 CAPTION_LANGUAGES = {
@@ -171,61 +170,50 @@ async def send_msg(bot, filename, caption):
     except Exception as imdb_err:
         logger.warning("IMDB fetch error for '%s': %s", filename, imdb_err, exc_info=True)
     
-    # Improved poster handling with timeouts and fallbacks
-    poster_url = None
-    try:
-        poster_url = await asyncio.wait_for(
-            get_landscape_poster_from_bharath_api(quote(filename)),
-            timeout=8
-        )
-    except asyncio.TimeoutError:
-        logger.warning("Landscape poster API timed out for: %s", filename)
+    # Priority 1: Try landscape poster first
+    poster_url = await get_landscape_poster_from_bharath_api(quote(filename))
     
+    # Priority 2: Fallback to regular poster
     if not poster_url:
-        try:
-            poster_url = await asyncio.wait_for(
-                get_poster_from_bharath_api(quote(filename)),
-                timeout=8
-            )
-        except asyncio.TimeoutError:
-            logger.warning("Regular poster API timed out for: %s", filename)
+        poster_url = await get_poster_from_bharath_api(quote(filename))
     
-    # Final fallback to default poster URL
+    # Priority 3: Use IMDB poster if available
+    if not poster_url and details and details.get('poster_url'):
+        poster_url = details['poster_url']
+    
+    # Final fallback
     if not poster_url:
         poster_url = DEFAULT_POSTER_URL
         logger.info("Using default poster for: %s", filename)
     
-    # Download poster image with timeout
+    # Download poster
     if poster_url and poster_url != DEFAULT_POSTER_URL:
         try:
-            resized_poster = await asyncio.wait_for(
-                fetch_image(poster_url, timeout=10),
-                timeout=12
-            )
-        except (asyncio.TimeoutError, Exception) as img_err:
-            logger.warning("Image download failed for %s: %s", poster_url, img_err)
-    
-    # If still no poster, use default
-    if not resized_poster:
-        try:
-            resized_poster = await asyncio.wait_for(
-                fetch_image(DEFAULT_POSTER_URL, timeout=8),
-                timeout=10
-            )
-        except Exception:
-            resized_poster = None
-            logger.error("Failed to download default poster")
+            resized_poster = await fetch_image(poster_url, timeout=15)
+        except Exception as img_err:
+            logger.warning("Poster download failed: %s", img_err)
     
     unique_id = generate_unique_id(filename)
     reaction_counts[unique_id] = {"❤️": 0, "👍": 0, "👎": 0, "🔥": 0}
     user_reactions[unique_id] = {}
-    text = script.MOVIE_UPDATE_NOTIFY_TXT.format(poster_url=poster_url, imdb_url=imdb_url, filename=filename, tag=tag, genres=genres, ott=ott_platform, quality=quality, language=language, rating=rating, search_link=temp.B_LINK)
+    text = script.MOVIE_UPDATE_NOTIFY_TXT.format(
+        poster_url=poster_url,
+        imdb_url=imdb_url,
+        filename=filename,
+        tag=tag,
+        genres=genres,
+        ott=ott_platform,
+        quality=quality,
+        language=language,
+        rating=rating,
+        search_link=temp.B_LINK
+    )
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(f"❤️ {reaction_counts[unique_id]['❤️']}", callback_data=f"r_{unique_id}_heart"),
-            InlineKeyboardButton(f"👍 {reaction_counts[unique_id]['👍']}", callback_data=f"r_{unique_id}_like"),
-            InlineKeyboardButton(f"👎 {reaction_counts[unique_id]['👎']}", callback_data=f"r_{unique_id}_dislike"),
-            InlineKeyboardButton(f"🔥 {reaction_counts[unique_id]['🔥']}", callback_data=f"r_{unique_id}_fire"),
+            InlineKeyboardButton(f"❤️ 0", callback_data=f"r_{unique_id}_heart"),
+            InlineKeyboardButton(f"👍 0", callback_data=f"r_{unique_id}_like"),
+            InlineKeyboardButton(f"👎 0", callback_data=f"r_{unique_id}_dislike"),
+            InlineKeyboardButton(f"🔥 0", callback_data=f"r_{unique_id}_fire"),
         ],
         [
             InlineKeyboardButton('📂 Gᴇᴛ Fɪʟᴇ 📂', url=f"https://t.me/{temp.U_NAME}?start=getfile-{filename.replace(' ', '-')}"),
@@ -236,13 +224,23 @@ async def send_msg(bot, filename, caption):
     ])
     try:
         if resized_poster and not LINK_PREVIEW:
-            await bot.send_photo(chat_id=MOVIE_UPDATE_CHANNEL, photo=resized_poster, caption=text, reply_markup=buttons, parse_mode=enums.ParseMode.HTML)
-        elif resized_poster and LINK_PREVIEW:
-            await bot.send_message(chat_id=MOVIE_UPDATE_CHANNEL, text=text, reply_markup=buttons, invert_media=True if ABOVE_PREVIEW else False, parse_mode=enums.ParseMode.HTML)
+            await bot.send_photo(
+                chat_id=MOVIE_UPDATE_CHANNEL,
+                photo=resized_poster,
+                caption=text,
+                reply_markup=buttons,
+                parse_mode=enums.ParseMode.HTML
+            )
         else:
-            await bot.send_message(chat_id=MOVIE_UPDATE_CHANNEL, text=text, reply_markup=buttons, parse_mode=enums.ParseMode.HTML)
+            await bot.send_message(
+                chat_id=MOVIE_UPDATE_CHANNEL,
+                text=text,
+                reply_markup=buttons,
+                disable_web_page_preview=not LINK_PREVIEW,
+                parse_mode=enums.ParseMode.HTML
+            )
     except Exception as send_err:
-        logger.exception("Failed to send message for '%s': %s", filename, send_err)
+        logger.exception("Failed to send update for '%s': %s", filename, send_err)
 
 def clean_mentions_links(text: str) -> str:
     return re.sub(r'@[^ \n\r\t.,:;!?()\[\]{}<>\\/"\'=_%]+|\bwww\.[^\s\]\)]+|\([\@^]+\)|\[[\@^]+\]', '', text or "").strip()
@@ -255,8 +253,3 @@ def extract_ott_platform(text: str) -> str:
     text = text.lower()
     found = {plat for key, plat in OTT_PLATFORMS.items() if key in text}
     return " | ".join(found) if found else "N/A"
-
-def media_tag(filename: str, caption: str) -> str:
-    if re.search(r'(?:s|season)[\s\-_]*\d+', f"{filename} {caption}", flags=re.IGNORECASE):
-        return '#TV_SERIES'
-    return '#MOVIE'
