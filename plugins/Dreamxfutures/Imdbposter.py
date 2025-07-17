@@ -23,20 +23,19 @@ async def fetch_image(url, size=None):
                 if response.status == 200:
                     content = await response.read()
                     img = Image.open(BytesIO(content))
-                    if size:
-                        img = img.resize(size, Image.LANCZOS)
                     img_byte_arr = BytesIO()
+                    if size:
+                        try:
+                            img = img.resize(size, Image.LANCZOS)
+                        except Exception as resize_err:
+                            print(f"Resize failed: {resize_err}")
                     img.save(img_byte_arr, format='JPEG')
                     img_byte_arr.seek(0)
                     return img_byte_arr
                 else:
                     print(f"Failed to fetch image: {response.status}")
-    except aiohttp.ClientError as e:
-        print(f"HTTP request error in fetch_image: {e}")
-    except IOError as e:
-        print(f"IO error in fetch_image: {e}")
     except Exception as e:
-        print(f"Unexpected error in fetch_image: {e}")
+        print(f"Error in fetch_image: {e}")
     return None
 
 async def get_movie_details(query, id=False, file=None):
