@@ -13,7 +13,7 @@ def list_to_str(lst):
         return ", ".join(map(str, lst))
     return ""
 
-async def fetch_image(url, size=(860, 1200)): #fixed square img
+async def fetch_image(url):  # ✅ Original Size Image Fetch
     if not DREAMXBOTZ_IMAGE_FETCH:
         print("Image fetching is disabled.")
         return None
@@ -23,7 +23,6 @@ async def fetch_image(url, size=(860, 1200)): #fixed square img
                 if response.status == 200:
                     content = await response.read()
                     img = Image.open(BytesIO(content))
-                    img = img.resize(size, Image.LANCZOS)
                     img_byte_arr = BytesIO()
                     img.save(img_byte_arr, format='JPEG')
                     img_byte_arr.seek(0)
@@ -69,7 +68,7 @@ async def get_movie_details(query, id=False, file=None):
         else:
             movieid = query
         movie = ia.get_movie(movieid)
-        ia.update(movie, info=['main', 'vote details']) # or else you won't get ratings
+        ia.update(movie, info=['main', 'vote details'])
         if movie.get("original air date"):
             date = movie["original air date"]
         elif movie.get("year"):
@@ -83,7 +82,6 @@ async def get_movie_details(query, id=False, file=None):
             plot = movie.get('plot outline')
         if plot and len(plot) > 800:
             plot = plot[:800] + "..."
-        poster_url = movie.get('full-size cover url')
         return {
             'title': movie.get('title'),
             'votes': movie.get('votes'),
@@ -108,7 +106,7 @@ async def get_movie_details(query, id=False, file=None):
             'release_date': date,
             'year': movie.get('year'),
             'genres': list_to_str(movie.get("genres")),
-            'poster_url': poster_url,
+            'poster_url': None,  # Poster Disabled from IMDbPy
             'plot': plot,
             'rating': str(movie.get("rating", "N/A")),
             'url': f'https://www.imdb.com/title/tt{movieid}'
@@ -116,3 +114,19 @@ async def get_movie_details(query, id=False, file=None):
     except Exception as e:
         print(f"An error occurred in get_movie_details: {e}")
         return None
+
+# ✅ BharathBoy Poster API Fallback Function
+async def get_poster_from_bharath_api(query):
+    try:
+        api_url = f"https://bharathboyapis.vercel.app/api/movie-posters?query={query}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    try:
+                        return data['posters'][0]['url']
+                    except:
+                        return None
+    except Exception as e:
+        print(f"Error fetching poster from Bharath API: {e}")
+    return None
