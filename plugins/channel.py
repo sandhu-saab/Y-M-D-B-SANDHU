@@ -1,5 +1,6 @@
 import re
 import logging
+from urllib.parse import quote
 from plugins.Dreamxfutures.Imdbposter import get_movie_details, fetch_image, get_poster_from_bharath_api
 from database.users_chats_db import db
 from pyrogram import Client, filters, enums
@@ -46,7 +47,7 @@ QUALITIES = [
     "HDCam", "HDTC", "CamRip", "TS", "TC", "TeleSync",
     "DVDScr", "DVDRip", "PreDVD",
     "WEBRip", "WEB-DL", "TVRip", "HDTV",
-    "BluRay", "BRRip", "BDRip", "4K",
+    "BluRay", "BRRip", "BDRip",
     "HEVC", "HDRip"
 ]
 
@@ -117,7 +118,7 @@ async def reaction_handler(client, query: CallbackQuery):
                 InlineKeyboardButton(f"🔥 {reaction_counts[unique_id]['🔥']}", callback_data=f"r_{unique_id}_fire"),
             ],
             [
-                InlineKeyboardButton('📂 Gᴇᴛ Fɪʟᴇ 📂', url=f"https://t.me/{temp.U_NAME}?start=getfile-{filename.replace(' ', '-')}"),
+                InlineKeyboardButton('📂 Gᴇᴛ Fɪʟᴇ 📂', url=f"https://t.me/{temp.U_NAME}?start=getfile-{query.message.reply_markup.inline_keyboard[0][0].callback_data.split('_')[1]}"),
             ],
             [
                 InlineKeyboardButton('♻️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ♻️', url="https://t.me/+dVRLYHXJztJlMmY9")
@@ -183,7 +184,7 @@ async def send_msg(bot, filename, caption):
     except Exception as imdb_err:
         logger.warning("IMDB fetch error for '%s': %s", filename, imdb_err, exc_info=True)
 
-    poster_url = await get_poster_from_bharath_api(filename)
+    poster_url = await get_poster_from_bharath_api(quote(filename))
 
     if poster_url:
         try:
