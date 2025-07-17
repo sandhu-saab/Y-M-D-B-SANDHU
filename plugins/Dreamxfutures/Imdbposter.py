@@ -13,7 +13,7 @@ def list_to_str(lst):
         return ", ".join(map(str, lst))
     return ""
 
-async def fetch_image(url):  # ✅ Original Size Image Fetch
+async def fetch_image(url, size=None):
     if not DREAMXBOTZ_IMAGE_FETCH:
         print("Image fetching is disabled.")
         return None
@@ -23,6 +23,8 @@ async def fetch_image(url):  # ✅ Original Size Image Fetch
                 if response.status == 200:
                     content = await response.read()
                     img = Image.open(BytesIO(content))
+                    if size:
+                        img = img.resize(size, Image.LANCZOS)
                     img_byte_arr = BytesIO()
                     img.save(img_byte_arr, format='JPEG')
                     img_byte_arr.seek(0)
@@ -82,6 +84,7 @@ async def get_movie_details(query, id=False, file=None):
             plot = movie.get('plot outline')
         if plot and len(plot) > 800:
             plot = plot[:800] + "..."
+        poster_url = movie.get('full-size cover url')
         return {
             'title': movie.get('title'),
             'votes': movie.get('votes'),
@@ -106,7 +109,7 @@ async def get_movie_details(query, id=False, file=None):
             'release_date': date,
             'year': movie.get('year'),
             'genres': list_to_str(movie.get("genres")),
-            'poster_url': None,  # Poster Disabled from IMDbPy
+            'poster_url': poster_url,
             'plot': plot,
             'rating': str(movie.get("rating", "N/A")),
             'url': f'https://www.imdb.com/title/tt{movieid}'
@@ -115,7 +118,6 @@ async def get_movie_details(query, id=False, file=None):
         print(f"An error occurred in get_movie_details: {e}")
         return None
 
-# ✅ BharathBoy Poster API Fallback Function
 async def get_poster_from_bharath_api(query):
     try:
         api_url = f"https://bharathboyapis.vercel.app/api/movie-posters?query={query}"
@@ -129,4 +131,19 @@ async def get_poster_from_bharath_api(query):
                         return None
     except Exception as e:
         print(f"Error fetching poster from Bharath API: {e}")
+    return None
+
+async def get_landscape_poster_from_bharath_api(query):
+    try:
+        api_url = f"https://bharathboyapis.vercel.app/api/movie-posters?query={query}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    try:
+                        return data['backdrops'][0]['url']
+                    except:
+                        return None
+    except Exception as e:
+        print(f"Error fetching backdrop from Bharath API: {e}")
     return None
