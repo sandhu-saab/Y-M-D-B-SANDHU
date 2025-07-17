@@ -67,14 +67,12 @@ async def media(bot, message):
             break
     else:
         return
-
     media.file_type = file_type
     media.caption = message.caption
     success, _ = await save_file(media)
     if not success:
         logger.info("save_file returned False, skipping update for %s", media.file_name)
         return
-
     try:
         if await db.movie_update_status(bot.me.id):
             await send_msg(bot, filename=media.file_name, caption=media.caption or "")
@@ -92,24 +90,19 @@ async def reaction_handler(client, query: CallbackQuery):
         unique_id = data[1]
         new_reaction = data[2]
         user_id = query.from_user.id
-
         emoji_map = {"heart": "❤️", "like": "👍", "dislike": "👎", "fire": "🔥"}
         if new_reaction not in emoji_map:
             return
-
         new_emoji = emoji_map[new_reaction]
         if unique_id not in reaction_counts:
             return
-
         if user_id in user_reactions[unique_id]:
             old_emoji = user_reactions[unique_id][user_id]
             if old_emoji == new_emoji:
                 return
             reaction_counts[unique_id][old_emoji] -= 1
-
         user_reactions[unique_id][user_id] = new_emoji
         reaction_counts[unique_id][new_emoji] += 1
-
         updated_buttons = [
             [
                 InlineKeyboardButton(f"❤️ {reaction_counts[unique_id]['❤️']}", callback_data=f"r_{unique_id}_heart"),
@@ -124,7 +117,6 @@ async def reaction_handler(client, query: CallbackQuery):
                 InlineKeyboardButton('♻️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ♻️', url="https://t.me/+dVRLYHXJztJlMmY9")
             ]
         ]
-
         await query.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(updated_buttons))
     except Exception as e:
         logger.error("Error in reaction handler: %s", e)
@@ -133,42 +125,33 @@ async def send_msg(bot, filename, caption):
     filename = clean_mentions_links(filename).title()
     caption_clean = clean_mentions_links(caption or "").lower()
     filename_lower = filename.lower()
-
     year_match = re.search(r"\b(19|20)\d{2}\b", caption_clean)
     year = year_match.group(0) if year_match else None
     season_match = (re.search(r"(?i)(?:s|season)0*(\d{1,2})", caption_clean) or re.search(r"(?i)(?:s|season)0*(\d{1,2})", filename_lower))
     season = season_match.group(1) if season_match else None
-
     if year and year in filename:
         filename = filename[:filename.find(year) + 4]
     elif season and season in filename.lower():
         filename = filename[:filename.lower().find(season) + len(season)]
-
     quality = await get_qualities(caption_clean, QUALITIES) or await get_qualities(filename_lower, QUALITIES) or "N/A"
     language_set = ({CAPTION_LANGUAGES[key] for key in CAPTION_LANGUAGES if key.lower() in caption_clean} or {CAPTION_LANGUAGES[key] for key in CAPTION_LANGUAGES if key.lower() in filename_lower})
     language = ", ".join(language_set) if language_set else "N/A"
     tag = "#SERIES" if season else "#MOVIE"
     ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
-
-    filename = re.sub(r"[()\[\]{}:;\'\-!,.?_]", " ", filename)
+    filename = re.sub(r"[()\[\]{}:;'\-!,.?_]", " ", filename)
     filename = re.sub(r"\s+", " ", filename).strip()
-
     try:
         result = await db.filename_col.update_one({"_id": filename}, {"$setOnInsert": {"_id": filename}}, upsert=True)
         is_new = result.upserted_id is not None
     except PyMongoError as db_err:
         logger.error("DB insert error for '%s': %s", filename, db_err, exc_info=True)
         return
-
     if not is_new:
         return
-
     resized_poster = None
     genres = None
-    poster_url = None
     rating = None
     imdb_url = None
-
     try:
         details = await get_movie_details(filename)
         if details:
@@ -183,29 +166,23 @@ async def send_msg(bot, filename, caption):
             imdb_url = details.get("url", None)
     except Exception as imdb_err:
         logger.warning("IMDB fetch error for '%s': %s", filename, imdb_err, exc_info=True)
-
     poster_url = await get_landscape_poster_from_bharath_api(quote(filename))
     if not poster_url:
         poster_url = await get_poster_from_bharath_api(quote(filename))
-
     if poster_url:
         try:
             resized_poster = await fetch_image(poster_url)
         except Exception as img_err:
             logger.warning("Image fetch error for '%s': %s", poster_url, img_err, exc_info=True)
-
     if not resized_poster:
         try:
             resized_poster = await fetch_image("https://te.legra.ph/file/88d845b4f8a024a71465d.jpg")
         except:
             resized_poster = None
-
     unique_id = generate_unique_id(filename)
     reaction_counts[unique_id] = {"❤️": 0, "👍": 0, "👎": 0, "🔥": 0}
     user_reactions[unique_id] = {}
-
     text = script.MOVIE_UPDATE_NOTIFY_TXT.format(poster_url=poster_url, imdb_url=imdb_url, filename=filename, tag=tag, genres=genres, ott=ott_platform, quality=quality, language=language, rating=rating, search_link=temp.B_LINK)
-
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(f"❤️ {reaction_counts[unique_id]['❤️']}", callback_data=f"r_{unique_id}_heart"),
@@ -220,7 +197,6 @@ async def send_msg(bot, filename, caption):
             InlineKeyboardButton('♻️ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ♻️', url="https://t.me/+dVRLYHXJztJlMmY9")
         ]
     ])
-
     try:
         if resized_poster and not LINK_PREVIEW:
             await bot.send_photo(chat_id=MOVIE_UPDATE_CHANNEL, photo=resized_poster, caption=text, reply_markup=buttons, parse_mode=enums.ParseMode.HTML)
