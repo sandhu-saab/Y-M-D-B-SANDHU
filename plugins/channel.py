@@ -98,12 +98,12 @@ def remove_ignored_words(text: str) -> str:
 
 def get_qualities(text: str) -> str:
     qualities = QUALITY_PATTERN.findall(text)
-    return ", ".join(qualities) if qualities else "N/A"
+    return ", ".join(qualities) if qualities else ""
 
 def extract_ott_platform(text: str) -> str:
     text = text.lower()
     platforms = {plat for key, plat in OTT_PLATFORMS.items() if key in text}
-    return " | ".join(platforms) if platforms else "N/A"
+    return " | ".join(platforms) if platforms else ""
 
 def extract_season_episode(filename: str) -> Tuple[Optional[int], Optional[str]]:
     for pattern in (RANGE_REGEX, SINGLE_REGEX, NAMED_REGEX):
@@ -135,11 +135,11 @@ def extract_media_info(filename: str, caption: str):
     season = episode = year = None
     tag = "#MOVIE"
     processed_raw = base_raw = filename
-    quality = get_qualities(caption_clean) or get_qualities(filename.lower()) or "N/A"
-    ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
+    quality = get_qualities(caption_clean) or get_qualities(filename.lower()) or ""
+    ott_platform = extract_ott_platform(f"{filename} {caption_clean}") or ""
 
     lang_keys = {k for k in CAPTION_LANGUAGES if k in caption_clean or k in filename.lower()}
-    language = ", ".join(sorted({CAPTION_LANGUAGES[k] for k in lang_keys})) if lang_keys else "N/A"
+    language = ", ".join(sorted({CAPTION_LANGUAGES[k] for k in lang_keys})) if lang_keys else ""
 
     season, episode = extract_season_episode(filename)
     if season is not None:
@@ -247,19 +247,19 @@ async def _process_with_lock(bot, filename, caption, media_info, base_name, proc
 
     if not movie_doc:
         details = await get_movie_details(base_name) or {}
-        raw_genres = details.get("genres", "N/A")
+        raw_genres = details.get("genres", "")
         if isinstance(raw_genres, str):
             genre_list = [g.strip() for g in raw_genres.split(",")]
-            genres = ", ".join(g for g in genre_list if g in STANDARD_GENRES) or "N/A"
+            genres = ", ".join(g for g in genre_list if g in STANDARD_GENRES) or ""
         else:
-            genres = ", ".join(g for g in raw_genres if g in STANDARD_GENRES) or "N/A"
+            genres = ", ".join(g for g in raw_genres if g in STANDARD_GENRES) or ""
 
         movie_doc = {
             "_id": base_name,
             "files": [file_data],
             "poster_url": details.get("poster_url"),
             "genres": genres,
-            "rating": details.get("rating", "N/A"),
+            "rating": details.get("rating", ""),
             "imdb_url": details.get("url", ""),
             "year": media_info["year"] or details.get("year"),
             "tag": media_info["tag"],
@@ -410,76 +410,73 @@ async def update_movie_message(bot, base_name):
         logger.error(f"Failed to update movie message: {e}")
 
 def generate_movie_message(movie_doc, base_name):
+    def make_line(prefix, value):
+        return f"\n➩ {prefix} : {value}" if value and value != "N/A" else ""
+
+    # Process rating
+    rating_line = make_line("Rating", movie_doc.get("rating", "")) if movie_doc.get("rating") not in ["", "N/A"] else ""
+
+    # Process OTT platform
+    ott_line = make_line("Ott", movie_doc.get("ott_platform", "")) if movie_doc.get("ott_platform") not in ["", "N/A"] else ""
+
+    # Process qualities from all files
     all_qualities = set()
-    all_languages = set()
-    all_ott_platforms = set()
-    all_tags = set()
-    episodes_by_season = defaultdict(set)
-
-    for file in movie_doc["files"]:
-        if file["quality"] != "N/A":
+    for file in movie_doc.get("files", []):
+        if file.get("quality", "N/A") != "N/A":
             all_qualities.update(q.strip() for q in file["quality"].split(",") if q.strip())
-        if file["language"] != "N/A":
+    quality_line = make_line("Pixels", ", ".join(sorted(all_qualities))) if all_qualities else ""
+
+    # Process languages from all files
+    all_languages = set()
+    for file in movie_doc.get("files", []):
+        if file.get("language", "N/A") != "N/A":
             all_languages.update(l.strip() for l in file["language"].split(",") if l.strip())
-        if file["ott_platform"] != "N/A":
-            platforms = [p.strip() for p in file["ott_platform"].split("|") if p.strip()]
-            all_ott_platforms.update(platforms)
-        if file.get("tag"):
-            all_tags.add(file["tag"])
-        if file.get("season") and file.get("episode"):
-            season = file["season"]
-            episode = file["episode"]
-            episodes_by_season[season].add(episode)
+    language_line = make_line("Audio", ", ".join(sorted(all_languages))) if all_languages else ""
 
-    # Prepare metadata
-    genres = movie_doc.get("genres", "")
-    rating = movie_doc.get("rating", "")
-    quality_str = ", ".join(sorted(all_qualities)) if all_qualities else ""
-    language_str = ", ".join(sorted(all_languages)) if all_languages else ""
-    ott_str = ", ".join(sorted(all_ott_platforms)) if all_ott_platforms else ""
+    # Process genres
+    genres_line = make_line("Genres", movie_doc.get("genres", "")) if movie_doc.get("genres") not in ["", "N/A"] else ""
 
-    # Create formatted lines conditionally
-    rating_line = f"➩ Rating: {rating}★" if rating and rating != "N/A" else ""
-    ott_line = f"➩ Ott : {ott_str}" if ott_str else ""
-    quality_line = f"➩ Pixels : {quality_str}" if quality_str else ""
-    language_line = f"➩ Audio : {language_str}" if language_str else ""
-    genres_line = f"➩ Genres: {genres}" if genres and genres != "N/A" else ""
-
-    # Episode collapsing
-    epi_block = ""
-    if episodes_by_season:
-        episode_lines = []
-        for season, episodes in sorted(episodes_by_season.items(), key=lambda x: int(x[0])):
-            singles = []
-            ranges = []
-            for ep in episodes:
-                if "-" in ep:
-                    ranges.append(ep)
-                else:
-                    try:
-                        singles.append(int(ep))
-                    except ValueError:
+    # Process episodes (special case for series)
+    episodes_block = ""
+    if movie_doc.get("tag") == "#SERIES":
+        episodes_by_season = defaultdict(set)
+        for file in movie_doc.get("files", []):
+            if file.get("season") and file.get("episode"):
+                season = file["season"]
+                episode = file["episode"]
+                episodes_by_season[season].add(episode)
+        
+        if episodes_by_season:
+            epi_lines = []
+            for season, episodes in sorted(episodes_by_season.items(), key=lambda x: int(x[0])):
+                singles = []
+                ranges = []
+                for ep in episodes:
+                    if "-" in ep:
                         ranges.append(ep)
-            singles.sort()
-            collapsed = []
-            start = end = None
-            for num in singles:
-                if start is None:
-                    start = end = num
-                elif num == end + 1:
-                    end = num
-                else:
+                    else:
+                        try:
+                            singles.append(int(ep))
+                        except ValueError:
+                            ranges.append(ep)
+                singles.sort()
+                collapsed = []
+                start = end = None
+                for num in singles:
+                    if start is None:
+                        start = end = num
+                    elif num == end + 1:
+                        end = num
+                    else:
+                        collapsed.append(str(start) if start == end else f"{start}-{end}")
+                        start = end = num
+                if start is not None:
                     collapsed.append(str(start) if start == end else f"{start}-{end}")
-                    start = end = num
-            if start is not None:
-                collapsed.append(str(start) if start == end else f"{start}-{end}")
-            all_ep_parts = collapsed + sorted(ranges, key=lambda s: int(s.split("-")[0]))
-            episode_lines.append(f"S{int(season)}: {', '.join(all_ep_parts)}")
-        epi_str = "\n".join(episode_lines)
-        if epi_str:
-            epi_block = f"➩ Episodes : <b>\n{epi_str}</b>"
+                all_ep_parts = collapsed + sorted(ranges, key=lambda s: int(s.split("-")[0]))
+                epi_lines.append(f"S{int(season)}: {', '.join(all_ep_parts)}")
+            
+            episodes_block = "\n➩ Episodes :\n" + "\n".join(epi_lines)
 
-    # Return formatted message using template
     return script.MOVIE_UPDATE_NOTIFY_TXT.format(
         base_name=base_name,
         rating_line=rating_line,
@@ -487,5 +484,5 @@ def generate_movie_message(movie_doc, base_name):
         quality_line=quality_line,
         language_line=language_line,
         genres_line=genres_line,
-        episodes_block=epi_block
+        episodes_block=episodes_block
     )
