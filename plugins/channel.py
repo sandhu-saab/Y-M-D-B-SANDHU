@@ -139,8 +139,8 @@ def get_qualities(text: str) -> dict:
             quality_types.add(QUALITY_TYPE_MAPPINGS[q_lower])
     
     return {
-        'resolutions': sorted(resolutions, key=lambda x: int(x.replace('p','').replace('K','000')) if resolutions else [],
-        'quality_types': sorted(quality_types) if quality_types else []
+    'resolutions': sorted(resolutions, key=lambda x: int(x.replace('p', '').replace('K', '000'))) if resolutions else [],
+    'quality_types': sorted(quality_types) if quality_types else []
     }
 
 def extract_ott_platform(text: str) -> str:
