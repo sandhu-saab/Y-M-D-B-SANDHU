@@ -203,6 +203,7 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """<b>​【{base_name}】🆕️
+    
 {rating_line}
 {ott_line}
 {quality_type_line}
