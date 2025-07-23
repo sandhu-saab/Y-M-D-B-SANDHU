@@ -476,8 +476,8 @@ def generate_movie_message(movie_doc, base_name):
             all_quality_types.update(file["quality_data"].get("quality_types", []))
     
     # Create separate lines
-    resolution_line = make_line("Resolution", ", ".join(sorted(all_resolutions, key=lambda x: int(x.replace('p','').replace('K','000'))))) if all_resolutions else ""
-    quality_type_line = make_line("Quality", ", ".join(sorted(all_quality_types))) if all_quality_types else ""
+    resolution_line = make_line("Print", ", ".join(sorted(all_resolutions, key=lambda x: int(x.replace('p','').replace('K','000'))))) if all_resolutions else ""
+    quality_type_line = make_line("Pixels", ", ".join(sorted(all_quality_types))) if all_quality_types else ""
 
     # Process languages
     all_languages = set()
