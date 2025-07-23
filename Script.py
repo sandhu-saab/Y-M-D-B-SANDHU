@@ -203,7 +203,7 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = MOVIE_UPDATE_NOTIFY_TXT = """<b>​【{base_name}】🆕️
-{rating_line}{ott_line}{quality_line}{language_line}{genres_line}{episodes_block}</b>"""
+{rating_line}{ott_line}{language_line}{genres_line}{episodes_block}{quality_line}</b>"""
 
 
     IMDB_TEMPLATE_TXT = """<b>🏷 Tɪᴛʟᴇ</b>: <a href={url}>{title}</a>
