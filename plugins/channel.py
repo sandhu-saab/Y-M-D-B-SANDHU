@@ -414,7 +414,7 @@ def generate_movie_message(movie_doc, base_name):
         return f"\n➩ {prefix} : {value}" if value and value != "N/A" else ""
 
     # Process rating
-    rating_line = make_line("Rating", movie_doc.get("rating", "")) if movie_doc.get("rating") not in ["", "N/A"] else ""
+    rating_line = make_line("Rating", f"{movie_doc.get('rating', '')}★") if movie_doc.get("rating") not in ["", "N/A"] else ""
 
     # Process OTT platform
     ott_line = make_line("Ott", movie_doc.get("ott_platform", "")) if movie_doc.get("ott_platform") not in ["", "N/A"] else ""
