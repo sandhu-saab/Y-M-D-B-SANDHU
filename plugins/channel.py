@@ -512,7 +512,4 @@ def generate_movie_message(movie_doc, base_name):
         episodes_block=episodes_block
     )
     
-    # Remove any empty lines that might have been created
-    message = "\n".join(line for line in message.split("\n") if line.strip())
-    
     return message
