@@ -1506,13 +1506,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
     elif query.data == "start":
         buttons = [[
-                    InlineKeyboardButton('🚀 𝗟𝗮𝘂𝗻𝗰𝗵 𝗜𝗻 𝗬𝗼𝘂𝗿 𝗚𝗿𝗼𝘂𝗽', url=f'http://telegram.me/{temp.U_NAME}?startgroup=true')
+                    InlineKeyboardButton('🚀 Invite to Group', url=f'http://telegram.me/{temp.U_NAME}?startgroup=true')
                 ],[
-                    InlineKeyboardButton('📘 𝗚𝘂𝗶𝗱𝗲', callback_data='help'),
-                    InlineKeyboardButton('🧾 𝗗𝗲𝘁𝗮𝗶𝗹𝘀', callback_data='about')
+                    InlineKeyboardButton('📘 User Manual', callback_data='help'),
+                    InlineKeyboardButton('🧾 About the Bot', callback_data='about')
                 ],[
-                    InlineKeyboardButton('🔎 𝗧𝗿𝗲𝗻𝗱𝗶𝗻𝗴 𝗡𝗼𝘄', callback_data="topsearch"),
-                    InlineKeyboardButton('💼 𝗣𝗿𝗼 𝗣𝗹𝗮𝗻𝘀', callback_data="premium_info"),
+                    InlineKeyboardButton('🔍 Currently Popular', callback_data="topsearch"),
+                    InlineKeyboardButton('👑 Unlock Premium', callback_data="premium_info"),
                 ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         current_time = datetime.now(pytz.timezone(TIMEZONE))
