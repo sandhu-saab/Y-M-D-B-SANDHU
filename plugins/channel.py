@@ -512,4 +512,16 @@ def generate_movie_message(movie_doc, base_name):
         episodes_block=episodes_block
     )
     
+    # ✅ Smart blank line remover (but keeps 1 blank line after title)
+    lines = message.splitlines()
+
+    # Keep first line (title), then add one blank line
+    final_lines = [lines[0], ""]
+
+    # Then add rest of the non-empty lines
+    final_lines += [line for line in lines[1:] if line.strip()]
+
+    # Final message
+    message = "\n".join(final_lines)
+
     return message
