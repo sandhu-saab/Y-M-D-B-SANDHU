@@ -202,8 +202,7 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     CAPTION = """<b><a href="https://t.me/OttSandhu">{file_name}</a></b>\n\n<b>⚜️ Powered By : <a href="https://t.me/OttSandhu">[ Oᴛᴛ Sᴀɴᴅʜᴜ ]</a></b>"""
 
     
-    MOVIE_UPDATE_NOTIFY_TXT = """<b>​【{base_name}】🆕️
-    
+    MOVIE_UPDATE_NOTIFY_TXT = """<b>​【{base_name}】🆕️\n
 {rating_line}
 {ott_line}
 {quality_type_line}
