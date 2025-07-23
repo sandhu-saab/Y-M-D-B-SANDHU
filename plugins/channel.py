@@ -68,6 +68,27 @@ STANDARD_GENRES = {
     'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Sport', 'Thriller', 'War', 'Western'
 }
 
+# Quality term mappings for proper formatting
+QUALITY_MAPPINGS = {
+    'hdrip': 'HDRip',
+    'hevc': 'HEVC',
+    'hdcam': 'HDCam',
+    'hdtc': 'HDTC',
+    'camrip': 'CamRip',
+    'webrip': 'WebRip',
+    'web-dl': 'WEB-DL',
+    'webdl': 'WEB-DL',
+    'bluray': 'BluRay',
+    'brrip': 'BRRip',
+    'bdrip': 'BDRip',
+    '4k': '4K',
+    'hdtv': 'HDTV',
+    'dvdrip': 'DVDRip',
+    'dvdscr': 'DVDScr',
+    'predvd': 'PreDVD',
+    'telesync': 'TeleSync'
+}
+
 # Precompiled regex patterns
 CLEAN_PATTERN = re.compile(r'@[^ \n\r\t\.,:;!?()\[\]{}<>\\/"\'=_%]+|\bwww\.[^\s\]\)]+|\([\@^]+\)|\[[\@^]+\]')
 NORMALIZE_PATTERN = re.compile(r"[._\-]+|[()\[\]{}:;'–!,.?_]")
@@ -98,7 +119,12 @@ def remove_ignored_words(text: str) -> str:
 
 def get_qualities(text: str) -> str:
     qualities = QUALITY_PATTERN.findall(text)
-    return ", ".join(qualities) if qualities else ""
+    processed_qualities = []
+    for q in qualities:
+        q_lower = q.lower()
+        q_formatted = QUALITY_MAPPINGS.get(q_lower, q.title())
+        processed_qualities.append(q_formatted)
+    return ", ".join(processed_qualities) if processed_qualities else ""
 
 def extract_ott_platform(text: str) -> str:
     text = text.lower()
@@ -413,24 +439,32 @@ def generate_movie_message(movie_doc, base_name):
     def make_line(prefix, value):
         return f"\n➩ {prefix} : {value}" if value and value != "N/A" else ""
 
-    # Process rating
+    # Process rating with ★
     rating_line = make_line("Rating", f"{movie_doc.get('rating', '')}★") if movie_doc.get("rating") not in ["", "N/A"] else ""
 
     # Process OTT platform
     ott_line = make_line("Ott", movie_doc.get("ott_platform", "")) if movie_doc.get("ott_platform") not in ["", "N/A"] else ""
 
-    # Process qualities from all files
+    # Process qualities with proper formatting
     all_qualities = set()
     for file in movie_doc.get("files", []):
         if file.get("quality", "N/A") != "N/A":
-            all_qualities.update(q.strip() for q in file["quality"].split(",") if q.strip())
+            qualities = [q.strip() for q in file["quality"].split(",") if q.strip()]
+            for q in qualities:
+                # Apply proper formatting to each quality term
+                q_lower = q.lower()
+                q_formatted = QUALITY_MAPPINGS.get(q_lower, q.title())
+                all_qualities.add(q_formatted)
+    
     quality_line = make_line("Pixels", ", ".join(sorted(all_qualities))) if all_qualities else ""
 
-    # Process languages from all files
+    # Process languages
     all_languages = set()
     for file in movie_doc.get("files", []):
         if file.get("language", "N/A") != "N/A":
-            all_languages.update(l.strip() for l in file["language"].split(",") if l.strip())
+            languages = [l.strip() for l in file["language"].split(",") if l.strip()]
+            all_languages.update(languages)
+    
     language_line = make_line("Audio", ", ".join(sorted(all_languages))) if all_languages else ""
 
     # Process genres
@@ -485,4 +519,4 @@ def generate_movie_message(movie_doc, base_name):
         language_line=language_line,
         genres_line=genres_line,
         episodes_block=episodes_block
-    )
+)
