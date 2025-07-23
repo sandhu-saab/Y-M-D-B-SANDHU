@@ -202,8 +202,14 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     CAPTION = """<b><a href="https://t.me/OttSandhu">{file_name}</a></b>\n\n<b>⚜️ Powered By : <a href="https://t.me/OttSandhu">[ Oᴛᴛ Sᴀɴᴅʜᴜ ]</a></b>"""
 
     
-    MOVIE_UPDATE_NOTIFY_TXT = MOVIE_UPDATE_NOTIFY_TXT = """<b>​【{base_name}】🆕️
-{rating_line}{ott_line}{language_line}{genres_line}{episodes_block}{quality_line}</b>"""
+    MOVIE_UPDATE_NOTIFY_TXT = """<b>​【{base_name}】🆕️
+{rating_line}
+{ott_line}
+{resolution_line}
+{quality_type_line}
+{language_line}
+{genres_line}
+{episodes_block}</b>"""
 
 
     IMDB_TEMPLATE_TXT = """<b>🏷 Tɪᴛʟᴇ</b>: <a href={url}>{title}</a>
