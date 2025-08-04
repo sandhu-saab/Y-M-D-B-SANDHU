@@ -32,7 +32,13 @@ IGNORE_WORDS = {
     "mar", "marathi", "guj", "gujarati", "urd", "urdu", "kor", "korean", "jpn", 
     "japanese", "nf", "netflix", "sonyliv", "sony", "sliv", "amzn", "prime", 
     "primevideo", "hotstar", "zee5", "jio", "jhs", "aha", "hbo", "paramount", 
-    "apple", "hoichoi", "sunnxt", "viki"
+    "apple", "hoichoi", "sunnxt", "viki", "hd", "hq", "pdtv", "dsr", "hdts", 
+    "hd-tc", "hd-ts", "hd-rip", "web", "webr", "web-d", "web-dl", "webrip", 
+    "webrip", "webrip", "web-rip", "web-rip", "pre-hd", "prehd", "prehd", 
+    "pre-hd", "prehd", "pre-hdrip", "pre-hd", "hdr", "hd-rip", "hd-rip", 
+    "hd rip", "hd rip", "hd r", "bluray", "blu-ray", "bluray", "blu-ray", 
+    "br", "bd", "bdrip", "bd-rip", "bd-r", "uhd", "ultra hd", "ultrahd", 
+    "4k", "2160p", "3d", "s3d", "3dhsbs", "3dsbs", "hsbs", "h-sbs"
 }|BAD_WORDS
 
 # Constants
@@ -74,7 +80,14 @@ NORMALIZE_PATTERN = re.compile(r"[._]+|[()\[\]{}:;'–!,.?_]")
 QUALITY_PATTERN = re.compile(
     r"\b(?:HDCam|HDTC|CamRip|TS|TC|TeleSync|DVDScr|DVDRip|PreDVD|"
     r"WEBRip|WEB-DL|TVRip|HDTV|WEB DL|WebDl|BluRay|BRRip|BDRip|"
-    r"360p|480p|720p|1080p|2160p|4K|1440p|540p|240p|140p|HEVC|HDRip)\b", 
+    r"360p|480p|720p|1080p|2160p|4K|1440p|540p|240p|140p|HEVC|HDRip|"
+    r"Pre-HD|WebRip|HDC|HD|HQ|PDTV|DSR|HDTS|HDTC|HD-TC|HD-TS|"
+    r"HD-Rip|WEB|WEBR|WEB-D|WEB-DL|WEBRip|WEBRIP|WEBRip|WEB-Rip|WEB-RIP|"
+    r"Pre-HD|PREHD|PreHD|PRE-HD|PreHD|Pre-HDRip|Pre-HD|"
+    r"HDRip|HDR|HD-Rip|HD-RIP|HD\s*Rip|HD\s*RIP|HD\s*R|"
+    r"BluRay|Blu-Ray|BLURAY|BLU-RAY|BR|BD|BDrip|BD-Rip|BD-R|"
+    r"UHD|Ultra HD|UltraHD|4K|2160p|"
+    r"3D|S3D|3DHSBS|3DSBS|HSBS|H-SBS)\b",
     re.IGNORECASE
 )
 YEAR_PATTERN = re.compile(r"(?<![A-Za-z0-9])(?:19|20)\d{2}(?![A-Za-z0-9])")
@@ -425,22 +438,45 @@ async def update_movie_message(bot, base_name):
         logger.error(f"Failed to update movie message: {e}")
 
 def generate_movie_message(movie_doc, base_name):
-    # Define resolution keywords
+    # Define resolution keywords and format keywords
     RESOLUTIONS = {"360p", "480p", "540p", "720p", "1080p", "1440p", "2160p", "4K", "140p", "240p"}
+    FORMATS = {
+        "hdtc", "hdts", "hdcam", "camrip", "ts", "tc", "telesync", "dvdscr", 
+        "dvdrip", "predvd", "webrip", "web-dl", "tvrip", "hdtv", "bluray", 
+        "brrip", "bdrip", "hevc", "hdrip", "pre-hd", "webrip", "hdr", 
+        "hd-rip", "web", "webr", "web-d", "prehd", "hd", "hq", "pdtv", 
+        "dsr", "hd-tc", "hd-ts", "uhd", "ultra hd", "3d", "s3d"
+    }
+    
     formats = set()
     pixels = set()
     
     for file in movie_doc["files"]:
         if file["quality"] != "N/A":
             for q in file["quality"].split(','):
-                q = q.strip()
+                q = q.strip().lower()
                 if not q:
                     continue
                 # Separate formats and resolutions
                 if q in RESOLUTIONS:
-                    pixels.add(q)
+                    pixels.add(q.upper() if q == "4k" else q)
+                elif q in FORMATS:
+                    # Convert to properly formatted display names
+                    fmt_map = {
+                        "web-dl": "WEB-DL", "webrip": "WEBRip", "hdr": "HDR",
+                        "hd-rip": "HDRip", "pre-hd": "PRE-HD", "hd": "HD",
+                        "hq": "HQ", "pdtv": "PDTV", "dsr": "DSR", "hd-tc": "HD-TC",
+                        "hd-ts": "HD-TS", "uhd": "UHD", "ultra hd": "Ultra HD",
+                        "3d": "3D", "s3d": "S3D", "hdcam": "HDCam", "camrip": "CamRip",
+                        "telesync": "TeleSync", "dvdscr": "DVDScr", "predvd": "PreDVD",
+                        "tvrip": "TVRip", "hdtv": "HDTV", "bluray": "BluRay",
+                        "brrip": "BRRip", "bdrip": "BDRip", "hevc": "HEVC",
+                        "hdrip": "HDRip", "web": "WEB", "webr": "WEBR", "prehd": "PRE-HD"
+                    }
+                    formats.add(fmt_map.get(q, q.upper()))
                 else:
-                    formats.add(q)
+                    # If not in predefined lists, add as is (properly capitalized)
+                    formats.add(q.upper())
 
     # Format quality strings
     format_str = ", ".join(sorted(formats)) if formats else "N/A"
