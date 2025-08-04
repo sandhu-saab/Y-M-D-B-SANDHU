@@ -210,7 +210,7 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     CAPTION = """<b><a href="https://t.me/OttSandhu">{file_name}</a></b>\n\n<b>⚜️ Powered By : <a href="https://t.me/OttSandhu">[ Oᴛᴛ Sᴀɴᴅʜᴜ ]</a></b>"""
 
     
-    MOVIE_UPDATE_NOTIFY_TXT = """​<b>【{filename}】🆕️ | <a href={imdb_url}>⭐ ɪᴍᴅʙ ɪɴғᴏ</a>\n\n📺 Oᴛᴛ : {ott}\n🔥 Rᴀᴛɪɴɢ : {rating}★\n🎞️ Fᴏʀᴍᴀᴛ : {format}\n🖼️ Pɪxᴇʟs : {pixels}\n🎧 Aᴜᴅɪᴏ : {language}\n🎭 Gᴇɴʀᴇs : {genres}\n\n<blockquote>𝖴𝗉𝗅𝗈𝖺𝖽𝖾𝖽 𝖡𝗒 - @OttSandhu</blockquote></b>"""
+    MOVIE_UPDATE_NOTIFY_TXT = """​<b>【{filename}】🆕️\n\n📺 Oᴛᴛ : {ott}\n🔥 Rᴀᴛɪɴɢ : {rating}★\n🎞️ Fᴏʀᴍᴀᴛ : {format}\n🖼️ Pɪxᴇʟs : {pixels}\n🎧 Aᴜᴅɪᴏ : {language}\n🎭 Gᴇɴʀᴇs : {genres}\n\n<blockquote>𝖴𝗉𝗅𝗈𝖺𝖽𝖾𝖽 𝖡𝗒 - @OttSandhu</blockquote></b>"""
 
 
     IMDB_TEMPLATE_TXT = """<b>🏷 Tɪᴛʟᴇ</b>: <a href={url}>{title}</a>
