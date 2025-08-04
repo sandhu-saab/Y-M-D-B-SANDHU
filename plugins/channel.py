@@ -32,14 +32,50 @@ IGNORE_WORDS = {
     "mar", "marathi", "guj", "gujarati", "urd", "urdu", "kor", "korean", "jpn", 
     "japanese", "nf", "netflix", "sonyliv", "sony", "sliv", "amzn", "prime", 
     "primevideo", "hotstar", "zee5", "jio", "jhs", "aha", "hbo", "paramount", 
-    "apple", "hoichoi", "sunnxt", "viki", "hd", "hq", "pdtv", "dsr", "hdts", 
-    "hd-tc", "hd-ts", "hd-rip", "web", "webr", "web-d", "web-dl", "webrip", 
-    "webrip", "webrip", "web-rip", "web-rip", "pre-hd", "prehd", "prehd", 
-    "pre-hd", "prehd", "pre-hdrip", "pre-hd", "hdr", "hd-rip", "hd-rip", 
-    "hd rip", "hd rip", "hd r", "bluray", "blu-ray", "bluray", "blu-ray", 
-    "br", "bd", "bdrip", "bd-rip", "bd-r", "uhd", "ultra hd", "ultrahd", 
-    "4k", "2160p", "3d", "s3d", "3dhsbs", "3dsbs", "hsbs", "h-sbs"
+    "apple", "hoichoi", "sunnxt", "viki"
 }|BAD_WORDS
+
+# Quality mapping dictionary
+QUALITY_MAPPING = {
+    "hdtc": "HDTC",
+    "hdts": "HDTS",
+    "hdcam": "HDCam",
+    "camrip": "CAMRip",
+    "ts": "Telesync",
+    "tc": "Telecine",
+    "telesync": "Telesync",
+    "dvdscr": "DVDScr",
+    "dvdrip": "DVDRip",
+    "predvd": "PreDVD",
+    "webrip": "WEBRip",
+    "web-dl": "WEB-DL",
+    "web dl": "WEB-DL",
+    "webdl": "WEB-DL",
+    "tvrip": "TVRip",
+    "hdtv": "HDTV",
+    "bluray": "BluRay",
+    "brrip": "BRRip",
+    "bdrip": "BDRip",
+    "hevc": "HEVC",
+    "hdrip": "HDRip",
+    "hd-rip": "HDRip",
+    "hd rip": "HDRip",
+    "hdr": "HDR",
+    "pre-hd": "Pre-HD",
+    "prehd": "Pre-HD",
+    "web": "WEB",
+    "webr": "WEBR",
+    "pdtv": "PDTV",
+    "dsr": "DSR",
+    "hd-tc": "HD-TC",
+    "hd-ts": "HD-TS",
+    "uhd": "UHD",
+    "ultra hd": "Ultra HD",
+    "3d": "3D",
+    "s3d": "S3D",
+    "hsbs": "HSBS",
+    "h-sbs": "HSBS"
+}
 
 # Constants
 CAPTION_LANGUAGES = {
@@ -114,8 +150,22 @@ def remove_ignored_words(text: str) -> str:
     return " ".join(word for word in text.split() if word.lower() not in IGNORE_WORDS_LOWER)
 
 def get_qualities(text: str) -> str:
+    if not text:
+        return "N/A"
+    
     qualities = QUALITY_PATTERN.findall(text)
-    return ", ".join(qualities) if qualities else "N/A"
+    if not qualities:
+        return "N/A"
+    
+    # Apply quality mapping and remove duplicates
+    unique_qualities = set()
+    for q in qualities:
+        q_lower = q.lower()
+        # Apply mapping or use original in uppercase
+        mapped = QUALITY_MAPPING.get(q_lower, q.upper())
+        unique_qualities.add(mapped)
+    
+    return ", ".join(sorted(unique_qualities))
 
 def extract_ott_platform(text: str) -> str:
     text = text.lower()
@@ -154,7 +204,19 @@ def extract_media_info(filename: str, caption: str):
     season = episode = year = None
     tag = "#MOVIE"
     processed_raw = base_raw = filename
-    quality = get_qualities(caption_clean) or get_qualities(filename.lower()) or "N/A"
+    
+    # Get qualities from caption and filename
+    cap_qualities = get_qualities(caption_clean)
+    file_qualities = get_qualities(filename.lower())
+    
+    # Prefer caption qualities, fallback to filename
+    if cap_qualities != "N/A":
+        quality = cap_qualities
+    elif file_qualities != "N/A":
+        quality = file_qualities
+    else:
+        quality = "N/A"
+        
     ott_platform = extract_ott_platform(f"{filename} {caption_clean}")
 
     lang_keys = {k for k in CAPTION_LANGUAGES if k in caption_clean or k in filename.lower()}
@@ -438,45 +500,26 @@ async def update_movie_message(bot, base_name):
         logger.error(f"Failed to update movie message: {e}")
 
 def generate_movie_message(movie_doc, base_name):
-    # Define resolution keywords and format keywords
+    # Define resolution keywords
     RESOLUTIONS = {"360p", "480p", "540p", "720p", "1080p", "1440p", "2160p", "4K", "140p", "240p"}
-    FORMATS = {
-        "hdtc", "hdts", "hdcam", "camrip", "ts", "tc", "telesync", "dvdscr", 
-        "dvdrip", "predvd", "webrip", "web-dl", "tvrip", "hdtv", "bluray", 
-        "brrip", "bdrip", "hevc", "hdrip", "pre-hd", "webrip", "hdr", 
-        "hd-rip", "web", "webr", "web-d", "prehd", "hd", "hq", "pdtv", 
-        "dsr", "hd-tc", "hd-ts", "uhd", "ultra hd", "3d", "s3d"
-    }
-    
     formats = set()
     pixels = set()
     
     for file in movie_doc["files"]:
         if file["quality"] != "N/A":
             for q in file["quality"].split(','):
-                q = q.strip().lower()
+                q = q.strip()
                 if not q:
                     continue
                 # Separate formats and resolutions
-                if q in RESOLUTIONS:
-                    pixels.add(q.upper() if q == "4k" else q)
-                elif q in FORMATS:
-                    # Convert to properly formatted display names
-                    fmt_map = {
-                        "web-dl": "WEB-DL", "webrip": "WEBRip", "hdr": "HDR",
-                        "hd-rip": "HDRip", "pre-hd": "PRE-HD", "hd": "HD",
-                        "hq": "HQ", "pdtv": "PDTV", "dsr": "DSR", "hd-tc": "HD-TC",
-                        "hd-ts": "HD-TS", "uhd": "UHD", "ultra hd": "Ultra HD",
-                        "3d": "3D", "s3d": "S3D", "hdcam": "HDCam", "camrip": "CamRip",
-                        "telesync": "TeleSync", "dvdscr": "DVDScr", "predvd": "PreDVD",
-                        "tvrip": "TVRip", "hdtv": "HDTV", "bluray": "BluRay",
-                        "brrip": "BRRip", "bdrip": "BDRip", "hevc": "HEVC",
-                        "hdrip": "HDRip", "web": "WEB", "webr": "WEBR", "prehd": "PRE-HD"
-                    }
-                    formats.add(fmt_map.get(q, q.upper()))
+                if q.lower() in RESOLUTIONS:
+                    # Special handling for 4K resolution
+                    if q.lower() == "4k":
+                        pixels.add("4K")
+                    else:
+                        pixels.add(q)
                 else:
-                    # If not in predefined lists, add as is (properly capitalized)
-                    formats.add(q.upper())
+                    formats.add(q)
 
     # Format quality strings
     format_str = ", ".join(sorted(formats)) if formats else "N/A"
