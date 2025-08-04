@@ -101,7 +101,26 @@ OTT_PLATFORMS = {
     "hotstar": "Disney+ Hotstar", "zee5": "Zee5",
     "jio": "JioHotstar", "jhs": "JioHotstar",
     "aha": "Aha", "hbo": "HBO Max", "paramount": "Paramount+",
-    "apple": "Apple TV+", "hoichoi": "Hoichoi", "sunnxt": "Sun NXT", "viki": "Viki", "chtv": "ChaupalTV", "chpl": "ChaupalTV", "chaupal": "ChaupalTV", "kableone": "KABLEONE"
+    "apple": "Apple TV+", "hoichoi": "Hoichoi", "sunnxt": "Sun NXT", 
+    "viki": "Viki", "chtv": "ChaupalTV", "chpl": "ChaupalTV", "chaupal": "ChaupalTV", 
+    "kableone": "KABLEONE", 
+    "mx": "MX Player", "mxplayer": "MX Player",
+    "alt": "ALTBalaji", "altbalaji": "ALTBalaji",
+    "eros": "Eros Now", "erosnow": "Eros Now",
+    "voot": "Voot",
+    "hulu": "Hulu",
+    "mubi": "Mubi",
+    "docubay": "DocuBay",
+    "hungama": "Hungama", "hungamaplay": "Hungama",
+    "tvf": "TVFPlay", "tvfplay": "TVFPlay",
+    "sheroo": "ShemarooMe", "shemaroo": "ShemarooMe",
+    "epic": "EPIC ON", "epicon": "EPIC ON",
+    "kocowa": "KOCOWA",
+    "crunchyroll": "Crunchyroll",
+    "dplus": "Disney+", "disneyplus": "Disney+",
+    "youtube": "YouTube Premium", "ytpremium": "YouTube Premium",
+    "lionsgate": "Lionsgate Play", "lgplay": "Lionsgate Play",
+    "planet": "Planet Marathi", "manorama": "ManoramaMAX"
 }
 
 STANDARD_GENRES = {
