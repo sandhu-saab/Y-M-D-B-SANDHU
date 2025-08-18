@@ -103,7 +103,7 @@ OTT_PLATFORMS = {
     "aha": "Aha", "hbo": "HBO Max", "paramount": "Paramount+",
     "apple": "Apple TV+", "hoichoi": "Hoichoi", "sunnxt": "Sun NXT", 
     "viki": "Viki", "chtv": "ChaupalTV", "chpl": "ChaupalTV", "chaupal": "ChaupalTV", 
-    "kableone": "KABLEONE", 
+    "kable": "KABLEONE", "kableone": "KABLEONE", 
     "mx": "MX Player", "mxplayer": "MX Player",
     "alt": "ALTBalaji", "altbalaji": "ALTBalaji",
     "eros": "Eros Now", "erosnow": "Eros Now",
