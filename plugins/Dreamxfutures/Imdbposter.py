@@ -18,12 +18,10 @@ def list_to_str(lst):
     return ""
 
 
-
-
-
 Image.MAX_IMAGE_PIXELS = None
 warnings.simplefilter("ignore", Image.DecompressionBombWarning)
-async def fetch_image(url, size=(860, 1200)):
+
+async def fetch_image(url):
     if not DREAMXBOTZ_IMAGE_FETCH:
         logger.info("Image fetching is disabled.")
         return None
@@ -37,9 +35,7 @@ async def fetch_image(url, size=(860, 1200)):
 
                 data = await response.read()
                 img = Image.open(BytesIO(data))
-                img = img.resize(size, Image.LANCZOS)
-
-
+                # ⚡ No resize here – keep original size
                 out = BytesIO()
                 img.save(out, format="JPEG")
                 out.seek(0)
@@ -195,4 +191,3 @@ async def get_movie_detailsx(query, id=False, file=None):
     details['backdrop_url'] = backdrop_url
 
     return details
-
