@@ -32,7 +32,7 @@ IGNORE_WORDS = {
     "mar", "marathi", "guj", "gujarati", "urd", "urdu", "kor", "korean", "jpn", 
     "japanese", "nf", "netflix", "sonyliv", "sony", "sliv", "amzn", "prime", 
     "primevideo", "hotstar", "zee5", "jio", "jhs", "aha", "hbo", "paramount", 
-    "apple", "hoichoi", "sunnxt", "viki"
+    "apple", "hoichoi", "sunnxt", "viki", "Haryanvi"
 }|BAD_WORDS
 
 # Quality mapping dictionary
@@ -86,6 +86,7 @@ CAPTION_LANGUAGES = {
     "mal": "Malayalam", "malayalam": "Malayalam",
     "eng": "English", "english": "English",
     "pun": "Punjabi", "punjabi": "Punjabi",
+    "haryanvi": "Haryanvi",
     "ben": "Bengali", "bengali": "Bengali",
     "mar": "Marathi", "marathi": "Marathi",
     "guj": "Gujarati", "gujarati": "Gujarati",
