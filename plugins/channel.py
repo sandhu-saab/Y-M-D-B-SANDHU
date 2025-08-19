@@ -110,6 +110,7 @@ OTT_PLATFORMS = {
     "alt": "ALTBalaji", "altbalaji": "ALTBalaji",
     "eros": "Eros Now", "erosnow": "Eros Now",
     "voot": "Voot",
+    "stage": "STAGE",
     "hulu": "Hulu",
     "mubi": "Mubi",
     "docubay": "DocuBay",
