@@ -21,7 +21,7 @@ def list_to_str(lst):
 Image.MAX_IMAGE_PIXELS = None
 warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 
-async def fetch_image(url):
+async def fetch_image(url, size=None):
     if not DREAMXBOTZ_IMAGE_FETCH:
         logger.info("Image fetching is disabled.")
         return None
@@ -35,7 +35,11 @@ async def fetch_image(url):
 
                 data = await response.read()
                 img = Image.open(BytesIO(data))
-                # ⚡ No resize here – keep original size
+
+                # ✅ Agar size diya gaya hai to resize karo, warna original rakho
+                if size:
+                    img = img.resize(size, Image.LANCZOS)
+
                 out = BytesIO()
                 img.save(out, format="JPEG")
                 out.seek(0)
